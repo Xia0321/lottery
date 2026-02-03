@@ -6,6 +6,8 @@ include('../func/adminfunc.php');
 include('../global/page.class.php');
 include('../include.php');
 include('./checklogin.php');
+require_once('../global/sql_helper.php'); // 安全修复：引入 SQL 辅助函数 (2026-02-03)
+
 switch ($_REQUEST['xtype']) {
     case "show":
 	    $psize = $config['psize'];
@@ -34,28 +36,38 @@ switch ($_REQUEST['xtype']) {
         $tpl->display("message.html");
         break;
     case "mdel":
+        // 安全修复：使用批量删除函数 (2026-02-03)
         $id  = $_POST['id'];
-        $sql = "delete from `$tb_message` where instr('$id',concat('|',id,'|'))";
-        if ($msql->query($sql)) {
+        $affected = batchDelete($msql->mysqli, $tb_message, $id, 'id', []);
+        if ($affected > 0) {
             echo 1;
         }
         break;
+
     case "response":
-        $id      = $_POST['id'];
+        // 安全修复：使用 prepared statement (2026-02-03)
+        $id      = intval($_POST['id']);
         $message = $_POST['message'];
-        $sql     = "update `$tb_message` set response='$message' where id='$id'";
-        if ($msql->query($sql)) {
+
+        $stmt = $msql->mysqli->prepare("UPDATE `$tb_message` SET response = ? WHERE id = ?");
+        $stmt->bind_param("si", $message, $id);
+        if ($stmt->execute()) {
             echo 1;
         }
+        $stmt->close();
         break;
+
    case "nss":
-	  $uid = $_REQUEST['uid'];
-	  $news = $_REQUEST['news'];
-	  $time = time();
-	  $sql     = "INSERT into `$tb_message` set content='$news',userid='$uid',time=NOW()";
-        if ($msql->query($sql)) {
+        // 安全修复：使用 prepared statement (2026-02-03)
+        $uid = intval($_REQUEST['uid']);
+        $news = $_REQUEST['news'];
+
+        $stmt = $msql->mysqli->prepare("INSERT INTO `$tb_message` (content, userid, time) VALUES (?, ?, NOW())");
+        $stmt->bind_param("si", $news, $uid);
+        if ($stmt->execute()) {
             echo 1;
         }
+        $stmt->close();
    break;	
 }
 ?>

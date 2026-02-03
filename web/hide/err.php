@@ -6,6 +6,8 @@ include('../func/csfunc.php');
 include('../func/adminfunc.php');
 include('../include.php');
 include('./checklogin.php');
+require_once('../global/sql_helper.php'); // 安全修复：引入 SQL 辅助函数 (2026-02-03)
+
 $msql->query("SHOW TABLES LIKE  '%total%'");
 $msql->next_record();
 if($msql->f(0)=='x_lib_total'){
@@ -141,14 +143,16 @@ switch ($_REQUEST['xtype']) {
         unset($tmp);
         break;
     case "sc":
-	    if($_SESSION['hides']!=1) exit;
+        // 安全修复：使用批量删除函数 (2026-02-03)
+        if($_SESSION['hides']!=1) exit;
         $idstr = $_POST['idstr'];
-		if($idstr=='all' & $_SESSION['hides']==1){
-		    $msql->query("delete from `$tb_error` where 1");
-		}else{
-		   $msql->query("delete from `$tb_error` where instr('$idstr',concat('|',id,'|'))");
-		}  
-        
+
+        if($idstr == 'all' && $_SESSION['hides'] == 1){
+            $msql->query("DELETE FROM `$tb_error`");
+        } else {
+            $affected = batchDelete($msql->mysqli, $tb_error, $idstr, 'id', []);
+        }
+
         echo 1;
         break;
 	case "changeifcl":

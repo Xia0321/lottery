@@ -6,6 +6,7 @@ include('../func/csfunc.php');
 include('../func/adminfunc.php');
 include('../include.php');
 include('./checklogin.php');
+require_once('../global/sql_helper.php'); // 安全修复：引入 SQL 辅助函数 (2026-02-03)
 
 // Disable strict group by for legacy query support
 $msql->query("SET sql_mode = ''");
@@ -647,9 +648,7 @@ switch ($_REQUEST['xtype']) {
       }
 	  //print_r($gamecs3);
       updategame($gamecs3, $uid);
-      /*        if ($ifagent == 1 & $status == 0) {
-      $msql->query("update `$tb_user` set status=0 where instr('$ugroup',userid)");
-      }*/
+      // 安全修复：已移除不安全的批量操作 (2026-02-03)
 	  $oldplc = transuser($uid,'plc');
 	  $oldfdc = transuser($uid,'fdc');
       if ($userpass == '') {
@@ -688,35 +687,75 @@ switch ($_REQUEST['xtype']) {
 		 }
 	  $ustr = $_POST['ustr'];
       $ustr = explode('|', $ustr);
+      // 安全修复：使用安全的批量删除函数 (2026-02-03)
       for ($i = 0; $i < count($ustr); $i++) {
          if ($ustr[$i] == '')
             continue;
          $ugroup = getusergroup($ustr[$i]);
-         $msql->query("select id from `$tb_lib` where instr('$ugroup',userid)");
-         $msql->next_record();
-         if ($msql->f('id') != '') {
-            echo 3;
-            exit;
+
+         // 检查是否有相关的投注记录
+         $ids = parseUserIds($ugroup);
+         if (!empty($ids)) {
+            $inClause = prepareInClause($ids);
+            $stmt = $msql->mysqli->prepare("SELECT id FROM `$tb_lib` WHERE userid IN ({$inClause['placeholders']}) LIMIT 1");
+            $stmt->bind_param($inClause['types'], ...$inClause['values']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result->fetch_assoc()) {
+               echo 3;
+               $stmt->close();
+               exit;
+            }
+            $stmt->close();
          }
       }
+
+      // 执行批量删除
+      $excludeIds = [99999999, 2001]; // 排除系统用户
       for ($i = 0; $i < count($ustr); $i++) {
          if ($ustr[$i] == '')
             continue;
          $ugroup = getusergroup($ustr[$i]);
-         $msql->query("delete from `$tb_user_page` where userid!=2001 and userid in (select userid from `$tb_user` where instr('$ugroup',fid))");
-         $msql->query("delete from `$tb_user` where instr('$ugroup',userid) and userid!=99999999");
-         $msql->query("delete from `$tb_user` where instr('$ugroup',fid) and userid!=99999999");
-         $msql->query("delete from `$tb_points` where instr('$ugroup',userid) and userid!=99999999");
-         $msql->query("delete from `$tb_zpan` where instr('$ugroup',userid) and userid!=99999999");
-         $msql->query("delete from `$tb_lib` where instr('$ugroup',userid)");
-         $msql->query("delete from `$tb_message` where instr('$ugroup',userid)");
-         $msql->query("delete from `$tb_online` where instr('$ugroup',userid)");
-         $msql->query("delete from `$tb_play_user` where instr('$ugroup',userid) and userid!=99999999");
-         $msql->query("delete from `$tb_fly` where instr('$ugroup',userid) and userid!=99999999");
-         $msql->query("delete from `$tb_fastje` where instr('$ugroup',userid) and userid!=99999999");
-         $msql->query("delete from `$tb_warn` where instr('$ugroup',userid) and userid!=99999999");
-         $msql->query("delete from `$tb_auto` where instr('$ugroup',userid) and userid!=99999999");
-         $msql->query("delete from `$tb_gamecs` where instr('$ugroup',userid) and userid!=99999999");
+
+         // 删除子用户
+         $ids = parseUserIds($ugroup);
+         if (!empty($ids)) {
+            $inClause = prepareInClause($ids);
+
+            // 先查询子用户
+            $stmt = $msql->mysqli->prepare("SELECT userid FROM `$tb_user` WHERE fid IN ({$inClause['placeholders']})");
+            $stmt->bind_param($inClause['types'], ...$inClause['values']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $childIds = [];
+            while ($row = $result->fetch_assoc()) {
+               $childIds[] = $row['userid'];
+            }
+            $stmt->close();
+
+            // 删除子用户的数据
+            if (!empty($childIds)) {
+               $childIds = array_diff($childIds, $excludeIds);
+               if (!empty($childIds)) {
+                  batchDelete($msql->mysqli, $tb_user_page, implode(',', $childIds), 'userid', [2001]);
+                  batchDelete($msql->mysqli, $tb_user, implode(',', $childIds), 'userid', [99999999]);
+               }
+            }
+         }
+
+         // 删除主用户的数据
+         batchDelete($msql->mysqli, $tb_user, $ugroup, 'userid', [99999999]);
+         batchDelete($msql->mysqli, $tb_points, $ugroup, 'userid', [99999999]);
+         batchDelete($msql->mysqli, $tb_zpan, $ugroup, 'userid', [99999999]);
+         batchDelete($msql->mysqli, $tb_lib, $ugroup, 'userid', []);
+         batchDelete($msql->mysqli, $tb_message, $ugroup, 'userid', []);
+         batchDelete($msql->mysqli, $tb_online, $ugroup, 'userid', []);
+         batchDelete($msql->mysqli, $tb_play_user, $ugroup, 'userid', [99999999]);
+         batchDelete($msql->mysqli, $tb_fly, $ugroup, 'userid', [99999999]);
+         batchDelete($msql->mysqli, $tb_fastje, $ugroup, 'userid', [99999999]);
+         batchDelete($msql->mysqli, $tb_warn, $ugroup, 'userid', [99999999]);
+         batchDelete($msql->mysqli, $tb_auto, $ugroup, 'userid', [99999999]);
+         batchDelete($msql->mysqli, $tb_gamecs, $ugroup, 'userid', [99999999]);
       }
       echo 1;
       break;
@@ -729,14 +768,22 @@ switch ($_REQUEST['xtype']) {
          if ($u[$i] == '') {
             continue;
          }
-         $uid = $u[$i];
+         $uid = intval($u[$i]); // 安全修复：验证为整数 (2026-02-03)
          if (transuser(transuser($uid, 'fid'), 'status') == 0 & ($status == 1 | $status == 2)) {
             exit;
          }
-         $sql = "update `$tb_user` set status='$status' where userid='$uid'";
-         $msql->query($sql);
+
+         // 安全修复：使用 prepared statement
+         $stmt = $msql->mysqli->prepare("UPDATE `$tb_user` SET status = ? WHERE userid = ?");
+         $stmt->bind_param("ii", $status, $uid);
+         $stmt->execute();
+         $stmt->close();
+
          if (($status == 1 | $status == 2) & transuser($uid, 'ifagent') == 1) {
-            $msql->query("update `$tb_user` set status='$status' where fid='$uid' and ifson=1");
+            $stmt = $msql->mysqli->prepare("UPDATE `$tb_user` SET status = ? WHERE fid = ? AND ifson = 1");
+            $stmt->bind_param("ii", $status, $uid);
+            $stmt->execute();
+            $stmt->close();
          }
          if ($status == 0 | $status == 2) {
             $ugroup = getusergroup($uid);
