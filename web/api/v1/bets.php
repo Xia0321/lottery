@@ -2,233 +2,272 @@
 /**
  * 投注记录查询 API
  *
- * GET /api/v1/bets - 查询投注列表（支持时间范围、分页、状态筛选）
- * GET /api/v1/bets/{id} - 查询单条投注记录
+ * GET /api/v1/bets - 查询投注记录列表
+ * GET /api/v1/bets/{id} - 查询单个投注记录
  */
 
-require_once __DIR__ . '/../db_config.php';
+require_once(__DIR__ . '/BaseController.php');
 
-// 强制 HTTPS
-if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off') {
-    http_response_code(403);
-    ApiResponse::error(ErrorCode::SYS_SERVICE_UNAVAILABLE, '必须使用 HTTPS 访问');
-}
+class BetsController extends BaseController {
 
-// 认证
-$apiAuth = new ApiAuth($pdo, $redis);
-$apiKeyData = $apiAuth->authenticate();
+    public function handle() {
+        // 要求 GET 方法
+        $this->requireMethod('GET');
 
-// 获取 agent_id 用于数据隔离
-$agentId = $apiKeyData['agent_id'];
+        // 解析路径
+        $requestUri = $_SERVER['REQUEST_URI'];
 
-// 路由处理
-$requestUri = $_SERVER['REQUEST_URI'];
-$requestMethod = $_SERVER['REQUEST_METHOD'];
-
-// 解析路径
-if (preg_match('#/api/v1/bets/(\d+)$#', $requestUri, $matches)) {
-    // GET /api/v1/bets/{id}
-    if ($requestMethod === 'GET') {
-        getBetById($pdo, $matches[1], $agentId, $apiKeyData['id']);
-    } else {
-        ApiResponse::error(ErrorCode::PARAM_INVALID_VALUE, '不支持的请求方法');
+        // GET /api/v1/bets/{id}
+        if (preg_match('#/api/v1/bets/(\d+)$#', $requestUri, $matches)) {
+            $this->getBetById($matches[1]);
+        }
+        // GET /api/v1/bets
+        elseif (preg_match('#/api/v1/bets(\?.*)?$#', $requestUri)) {
+            $this->getBetsList();
+        }
+        else {
+            $this->respondError('Invalid request path', ErrorCode::PARAM_INVALID, 400);
+        }
     }
-} elseif (preg_match('#/api/v1/bets$#', $requestUri)) {
-    // GET /api/v1/bets
-    if ($requestMethod === 'GET') {
-        getBets($pdo, $agentId, $apiKeyData['id']);
-    } else {
-        ApiResponse::error(ErrorCode::PARAM_INVALID_VALUE, '不支持的请求方法');
+
+    /**
+     * 查询投注记录列表
+     */
+    private function getBetsList() {
+        try {
+            // 获取表名
+            global $tb_bet, $tb_user;
+
+            // 获取查询参数
+            $userId = $this->getOptionalParam('user_id', 'int', null, 'GET');
+            $gameId = $this->getOptionalParam('game_id', 'int', null, 'GET');
+            $status = $this->getOptionalParam('status', 'int', null, 'GET', ['min' => 0, 'max' => 2]);
+            $startDate = $this->getOptionalParam('start_date', 'string', null, 'GET');
+            $endDate = $this->getOptionalParam('end_date', 'string', null, 'GET');
+
+            // 分页参数
+            list($page, $pageSize) = $this->getPagination();
+            $offset = ($page - 1) * $pageSize;
+
+            // 构建查询条件
+            $where = ['1=1'];
+            $params = [];
+            $types = '';
+
+            // 数据隔离：只能查询本代理下的用户投注
+            if ($this->agentId !== null) {
+                $where[] = "b.userid IN (SELECT userid FROM `$tb_user` WHERE fid = ?)";
+                $params[] = $this->agentId;
+                $types .= 'i';
+            }
+
+            // 用户 ID 过滤
+            if ($userId !== null) {
+                $where[] = "b.userid = ?";
+                $params[] = $userId;
+                $types .= 'i';
+            }
+
+            // 游戏 ID 过滤
+            if ($gameId !== null) {
+                $where[] = "b.gameid = ?";
+                $params[] = $gameId;
+                $types .= 'i';
+            }
+
+            // 状态过滤
+            if ($status !== null) {
+                $where[] = "b.status = ?";
+                $params[] = $status;
+                $types .= 'i';
+            }
+
+            // 日期范围过滤
+            if ($startDate !== null) {
+                $where[] = "b.created_at >= ?";
+                $params[] = $startDate;
+                $types .= 's';
+            }
+
+            if ($endDate !== null) {
+                $where[] = "b.created_at <= ?";
+                $params[] = $endDate;
+                $types .= 's';
+            }
+
+            $whereClause = implode(' AND ', $where);
+
+            // 查询总数
+            $countSql = "
+                SELECT COUNT(*) as total
+                FROM `$tb_bet` b
+                WHERE $whereClause
+            ";
+            $countStmt = $this->mysqli->prepare($countSql);
+
+            if (!empty($params)) {
+                $countStmt->bind_param($types, ...$params);
+            }
+
+            $countStmt->execute();
+            $countResult = $countStmt->get_result();
+            $total = $countResult->fetch_assoc()['total'];
+            $countStmt->close();
+
+            // 查询列表数据
+            $sql = "
+                SELECT b.betid, b.userid, u.username, b.gameid, b.qishu, b.money,
+                       b.win_money, b.status, b.bet_content, b.created_at, b.settled_at
+                FROM `$tb_bet` b
+                LEFT JOIN `$tb_user` u ON b.userid = u.userid
+                WHERE $whereClause
+                ORDER BY b.created_at DESC
+                LIMIT ? OFFSET ?
+            ";
+
+            $stmt = $this->mysqli->prepare($sql);
+            if (!$stmt) {
+                throw new Exception('Prepare failed: ' . $this->mysqli->error);
+            }
+
+            // 添加分页参数
+            $params[] = $pageSize;
+            $params[] = $offset;
+            $types .= 'ii';
+
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $bets = [];
+            while ($row = $result->fetch_assoc()) {
+                $bets[] = [
+                    'bet_id' => (int)$row['betid'],
+                    'user_id' => (int)$row['userid'],
+                    'username' => $row['username'],
+                    'game_id' => (int)$row['gameid'],
+                    'period' => $row['qishu'],
+                    'bet_amount' => floatval($row['money']),
+                    'win_amount' => floatval($row['win_money']),
+                    'status' => (int)$row['status'],
+                    'status_text' => $this->getBetStatusText($row['status']),
+                    'bet_content' => $row['bet_content'],
+                    'created_at' => $row['created_at'],
+                    'settled_at' => $row['settled_at']
+                ];
+            }
+            $stmt->close();
+
+            // 构建响应
+            $data = [
+                'list' => $bets,
+                'pagination' => [
+                    'page' => $page,
+                    'page_size' => $pageSize,
+                    'total' => (int)$total,
+                    'total_pages' => (int)ceil($total / $pageSize)
+                ]
+            ];
+
+            $this->respondSuccess($data);
+
+        } catch (Exception $e) {
+            error_log("Get bets list error: " . $e->getMessage());
+            $this->respondError('Database error', ErrorCode::SYS_DATABASE_ERROR, 500);
+        }
     }
-} else {
-    ApiResponse::error(ErrorCode::PARAM_INVALID_VALUE, '无效的请求路径');
-}
 
+    /**
+     * 查询单个投注记录
+     *
+     * @param int $betId 投注 ID
+     */
+    private function getBetById($betId) {
+        try {
+            // 获取表名
+            global $tb_bet, $tb_user;
 
-/**
- * 查询投注列表
- *
- * @param PDO $pdo
- * @param int|null $agentId
- * @param int $apiKeyId
- * @return void
- */
-function getBets($pdo, $agentId, $apiKeyId) {
-    try {
-        // 获取查询参数
-        $userId = $_GET['user_id'] ?? null;
-        $startTime = $_GET['start_time'] ?? null;
-        $endTime = $_GET['end_time'] ?? null;
-        $status = $_GET['status'] ?? null;
-        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-        $pageSize = isset($_GET['page_size']) ? intval($_GET['page_size']) : 20;
+            // 构建查询
+            $sql = "
+                SELECT b.betid, b.userid, u.username, b.gameid, b.qishu, b.money,
+                       b.win_money, b.status, b.bet_content, b.bet_type, b.odds,
+                       b.created_at, b.settled_at
+                FROM `$tb_bet` b
+                LEFT JOIN `$tb_user` u ON b.userid = u.userid
+                WHERE b.betid = ?
+            ";
 
-        // 参数验证
-        if ($page < 1) $page = 1;
-        if ($pageSize < 1 || $pageSize > 100) $pageSize = 20;
+            $params = [$betId];
+            $types = 'i';
 
-        // 构建查询条件
-        $sql = "
-            SELECT b.id, b.userid, u.username, b.qishu, b.money, b.win_money,
-                   b.status, b.created_at, b.updated_at
-            FROM x_bet b
-            INNER JOIN x_user u ON b.userid = u.userid
-            WHERE 1=1
-        ";
-        $params = [];
+            // 数据隔离：只能查询本代理下的用户投注
+            if ($this->agentId !== null) {
+                $sql .= " AND b.userid IN (SELECT userid FROM `$tb_user` WHERE fid = ?)";
+                $params[] = $this->agentId;
+                $types .= 'i';
+            }
 
-        // 数据隔离
-        if ($agentId !== null) {
-            $sql .= " AND u.fid = ?";
-            $params[] = $agentId;
-        }
+            $stmt = $this->mysqli->prepare($sql);
+            if (!$stmt) {
+                throw new Exception('Prepare failed: ' . $this->mysqli->error);
+            }
 
-        // 用户筛选
-        if ($userId !== null) {
-            $sql .= " AND b.userid = ?";
-            $params[] = intval($userId);
-        }
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $bet = $result->fetch_assoc();
+            $stmt->close();
 
-        // 时间范围筛选
-        if ($startTime !== null) {
-            $sql .= " AND b.created_at >= ?";
-            $params[] = $startTime;
-        }
-        if ($endTime !== null) {
-            $sql .= " AND b.created_at <= ?";
-            $params[] = $endTime;
-        }
+            if (!$bet) {
+                $this->respondError('Bet not found', ErrorCode::BIZ_RESOURCE_NOT_FOUND, 404);
+            }
 
-        // 状态筛选（0=未开奖，1=已中奖，2=未中奖）
-        if ($status !== null && in_array($status, ['0', '1', '2'])) {
-            $sql .= " AND b.status = ?";
-            $params[] = intval($status);
-        }
-
-        // 计算总数
-        $countSql = "SELECT COUNT(*) as total FROM (" . $sql . ") as count_query";
-        $stmt = $pdo->prepare($countSql);
-        $stmt->execute($params);
-        $total = $stmt->fetch()['total'];
-
-        // 分页查询
-        $sql .= " ORDER BY b.created_at DESC LIMIT ? OFFSET ?";
-        $params[] = $pageSize;
-        $params[] = ($page - 1) * $pageSize;
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        $bets = $stmt->fetchAll();
-
-        // 格式化响应数据
-        $data = [];
-        foreach ($bets as $bet) {
-            $data[] = [
-                'bet_id' => $bet['id'],
-                'user_id' => $bet['userid'],
+            // 格式化响应数据
+            $data = [
+                'bet_id' => (int)$bet['betid'],
+                'user_id' => (int)$bet['userid'],
                 'username' => $bet['username'],
+                'game_id' => (int)$bet['gameid'],
                 'period' => $bet['qishu'],
                 'bet_amount' => floatval($bet['money']),
                 'win_amount' => floatval($bet['win_money']),
-                'status' => intval($bet['status']),
-                'status_text' => getBetStatusText($bet['status']),
+                'status' => (int)$bet['status'],
+                'status_text' => $this->getBetStatusText($bet['status']),
+                'bet_content' => $bet['bet_content'],
+                'bet_type' => $bet['bet_type'],
+                'odds' => floatval($bet['odds']),
                 'created_at' => $bet['created_at'],
-                'updated_at' => $bet['updated_at']
+                'settled_at' => $bet['settled_at']
             ];
+
+            $this->respondSuccess($data);
+
+        } catch (Exception $e) {
+            error_log("Get bet error: " . $e->getMessage());
+            $this->respondError('Database error', ErrorCode::SYS_DATABASE_ERROR, 500);
         }
+    }
 
-        // 记录日志
-        ApiResponse::logApiCall($apiKeyId, $_SERVER['REQUEST_URI'], 'GET', 200, $_SERVER['REMOTE_ADDR']);
-
-        // 返回分页响应
-        ApiResponse::paginated($data, $total, $page, $pageSize);
-
-    } catch (Exception $e) {
-        error_log("Get bets error: " . $e->getMessage());
-        ApiResponse::error(ErrorCode::SYS_DATABASE_ERROR);
+    /**
+     * 获取投注状态文本
+     *
+     * @param int $status
+     * @return string
+     */
+    private function getBetStatusText($status) {
+        switch ((int)$status) {
+            case 0:
+                return 'pending';
+            case 1:
+                return 'won';
+            case 2:
+                return 'lost';
+            default:
+                return 'unknown';
+        }
     }
 }
 
-
-/**
- * 查询单条投注记录
- *
- * @param PDO $pdo
- * @param int $betId
- * @param int|null $agentId
- * @param int $apiKeyId
- * @return void
- */
-function getBetById($pdo, $betId, $agentId, $apiKeyId) {
-    try {
-        // 构建查询
-        $sql = "
-            SELECT b.id, b.userid, u.username, b.qishu, b.money, b.win_money,
-                   b.status, b.created_at, b.updated_at
-            FROM x_bet b
-            INNER JOIN x_user u ON b.userid = u.userid
-            WHERE b.id = ?
-        ";
-
-        $params = [$betId];
-
-        // 数据隔离
-        if ($agentId !== null) {
-            $sql .= " AND u.fid = ?";
-            $params[] = $agentId;
-        }
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        $bet = $stmt->fetch();
-
-        if (!$bet) {
-            ApiResponse::logApiCall($apiKeyId, $_SERVER['REQUEST_URI'], 'GET', 404, $_SERVER['REMOTE_ADDR']);
-            ApiResponse::error(ErrorCode::BIZ_BET_NOT_FOUND);
-        }
-
-        // 格式化响应数据
-        $data = [
-            'bet_id' => $bet['id'],
-            'user_id' => $bet['userid'],
-            'username' => $bet['username'],
-            'period' => $bet['qishu'],
-            'bet_amount' => floatval($bet['money']),
-            'win_amount' => floatval($bet['win_money']),
-            'status' => intval($bet['status']),
-            'status_text' => getBetStatusText($bet['status']),
-            'created_at' => $bet['created_at'],
-            'updated_at' => $bet['updated_at']
-        ];
-
-        // 记录日志
-        ApiResponse::logApiCall($apiKeyId, $_SERVER['REQUEST_URI'], 'GET', 200, $_SERVER['REMOTE_ADDR']);
-
-        // 返回成功响应
-        ApiResponse::success($data);
-
-    } catch (Exception $e) {
-        error_log("Get bet by id error: " . $e->getMessage());
-        ApiResponse::error(ErrorCode::SYS_DATABASE_ERROR);
-    }
-}
-
-
-/**
- * 获取投注状态文本
- *
- * @param int $status
- * @return string
- */
-function getBetStatusText($status) {
-    switch ($status) {
-        case 0:
-            return '未开奖';
-        case 1:
-            return '已中奖';
-        case 2:
-            return '未中奖';
-        default:
-            return '未知';
-    }
-}
+// 执行控制器
+$controller = new BetsController();
+$controller->handle();

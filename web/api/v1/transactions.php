@@ -2,239 +2,236 @@
 /**
  * 交易记录查询 API
  *
- * GET /api/v1/transactions - 查询交易列表（支持时间范围、分页、类型筛选）
- * GET /api/v1/transactions/{id} - 查询单条交易记录
+ * GET /api/v1/transactions - 查询交易记录列表
+ * GET /api/v1/transactions/{id} - 查询单个交易记录
  */
 
-require_once __DIR__ . '/../db_config.php';
+require_once(__DIR__ . '/BaseController.php');
 
-// 强制 HTTPS
-if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off') {
-    http_response_code(403);
-    ApiResponse::error(ErrorCode::SYS_SERVICE_UNAVAILABLE, '必须使用 HTTPS 访问');
-}
+class TransactionsController extends BaseController {
 
-// 认证
-$apiAuth = new ApiAuth($pdo, $redis);
-$apiKeyData = $apiAuth->authenticate();
+    public function handle() {
+        // 要求 GET 方法
+        $this->requireMethod('GET');
 
-// 获取 agent_id 用于数据隔离
-$agentId = $apiKeyData['agent_id'];
+        // 解析路径
+        $requestUri = $_SERVER['REQUEST_URI'];
 
-// 路由处理
-$requestUri = $_SERVER['REQUEST_URI'];
-$requestMethod = $_SERVER['REQUEST_METHOD'];
-
-// 解析路径
-if (preg_match('#/api/v1/transactions/(\d+)$#', $requestUri, $matches)) {
-    // GET /api/v1/transactions/{id}
-    if ($requestMethod === 'GET') {
-        getTransactionById($pdo, $matches[1], $agentId, $apiKeyData['id']);
-    } else {
-        ApiResponse::error(ErrorCode::PARAM_INVALID_VALUE, '不支持的请求方法');
+        // GET /api/v1/transactions/{id}
+        if (preg_match('#/api/v1/transactions/(\d+)$#', $requestUri, $matches)) {
+            $this->getTransactionById($matches[1]);
+        }
+        // GET /api/v1/transactions
+        elseif (preg_match('#/api/v1/transactions(\?.*)?$#', $requestUri)) {
+            $this->getTransactionsList();
+        }
+        else {
+            $this->respondError('Invalid request path', ErrorCode::PARAM_INVALID, 400);
+        }
     }
-} elseif (preg_match('#/api/v1/transactions$#', $requestUri)) {
-    // GET /api/v1/transactions
-    if ($requestMethod === 'GET') {
-        getTransactions($pdo, $agentId, $apiKeyData['id']);
-    } else {
-        ApiResponse::error(ErrorCode::PARAM_INVALID_VALUE, '不支持的请求方法');
+
+    /**
+     * 查询交易记录列表
+     */
+    private function getTransactionsList() {
+        try {
+            // 获取表名
+            global $tb_money_log, $tb_user;
+
+            // 获取查询参数
+            $userId = $this->getOptionalParam('user_id', 'int', null, 'GET');
+            $type = $this->getOptionalParam('type', 'string', null, 'GET');
+            $startDate = $this->getOptionalParam('start_date', 'string', null, 'GET');
+            $endDate = $this->getOptionalParam('end_date', 'string', null, 'GET');
+
+            // 分页参数
+            list($page, $pageSize) = $this->getPagination();
+            $offset = ($page - 1) * $pageSize;
+
+            // 构建查询条件
+            $where = ['1=1'];
+            $params = [];
+            $types = '';
+
+            // 数据隔离：只能查询本代理下的用户交易
+            if ($this->agentId !== null) {
+                $where[] = "t.userid IN (SELECT userid FROM `$tb_user` WHERE fid = ?)";
+                $params[] = $this->agentId;
+                $types .= 'i';
+            }
+
+            // 用户 ID 过滤
+            if ($userId !== null) {
+                $where[] = "t.userid = ?";
+                $params[] = $userId;
+                $types .= 'i';
+            }
+
+            // 类型过滤
+            if ($type !== null) {
+                $where[] = "t.type = ?";
+                $params[] = $type;
+                $types .= 's';
+            }
+
+            // 日期范围过滤
+            if ($startDate !== null) {
+                $where[] = "t.created_at >= ?";
+                $params[] = $startDate;
+                $types .= 's';
+            }
+
+            if ($endDate !== null) {
+                $where[] = "t.created_at <= ?";
+                $params[] = $endDate;
+                $types .= 's';
+            }
+
+            $whereClause = implode(' AND ', $where);
+
+            // 查询总数
+            $countSql = "
+                SELECT COUNT(*) as total
+                FROM `$tb_money_log` t
+                WHERE $whereClause
+            ";
+            $countStmt = $this->mysqli->prepare($countSql);
+
+            if (!empty($params)) {
+                $countStmt->bind_param($types, ...$params);
+            }
+
+            $countStmt->execute();
+            $countResult = $countStmt->get_result();
+            $total = $countResult->fetch_assoc()['total'];
+            $countStmt->close();
+
+            // 查询列表数据
+            $sql = "
+                SELECT t.id, t.userid, u.username, t.money, t.before_money, t.after_money,
+                       t.type, t.remark, t.created_at
+                FROM `$tb_money_log` t
+                LEFT JOIN `$tb_user` u ON t.userid = u.userid
+                WHERE $whereClause
+                ORDER BY t.created_at DESC
+                LIMIT ? OFFSET ?
+            ";
+
+            $stmt = $this->mysqli->prepare($sql);
+            if (!$stmt) {
+                throw new Exception('Prepare failed: ' . $this->mysqli->error);
+            }
+
+            // 添加分页参数
+            $params[] = $pageSize;
+            $params[] = $offset;
+            $types .= 'ii';
+
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $transactions = [];
+            while ($row = $result->fetch_assoc()) {
+                $transactions[] = [
+                    'transaction_id' => (int)$row['id'],
+                    'user_id' => (int)$row['userid'],
+                    'username' => $row['username'],
+                    'amount' => floatval($row['money']),
+                    'balance_before' => floatval($row['before_money']),
+                    'balance_after' => floatval($row['after_money']),
+                    'type' => $row['type'],
+                    'remark' => $row['remark'],
+                    'created_at' => $row['created_at']
+                ];
+            }
+            $stmt->close();
+
+            // 构建响应
+            $data = [
+                'list' => $transactions,
+                'pagination' => [
+                    'page' => $page,
+                    'page_size' => $pageSize,
+                    'total' => (int)$total,
+                    'total_pages' => (int)ceil($total / $pageSize)
+                ]
+            ];
+
+            $this->respondSuccess($data);
+
+        } catch (Exception $e) {
+            error_log("Get transactions list error: " . $e->getMessage());
+            $this->respondError('Database error', ErrorCode::SYS_DATABASE_ERROR, 500);
+        }
     }
-} else {
-    ApiResponse::error(ErrorCode::PARAM_INVALID_VALUE, '无效的请求路径');
-}
 
+    /**
+     * 查询单个交易记录
+     *
+     * @param int $transactionId 交易 ID
+     */
+    private function getTransactionById($transactionId) {
+        try {
+            // 获取表名
+            global $tb_money_log, $tb_user;
 
-/**
- * 查询交易列表
- *
- * @param PDO $pdo
- * @param int|null $agentId
- * @param int $apiKeyId
- * @return void
- */
-function getTransactions($pdo, $agentId, $apiKeyId) {
-    try {
-        // 获取查询参数
-        $userId = $_GET['user_id'] ?? null;
-        $startTime = $_GET['start_time'] ?? null;
-        $endTime = $_GET['end_time'] ?? null;
-        $type = $_GET['type'] ?? null;
-        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-        $pageSize = isset($_GET['page_size']) ? intval($_GET['page_size']) : 20;
+            // 构建查询
+            $sql = "
+                SELECT t.id, t.userid, u.username, t.money, t.before_money, t.after_money,
+                       t.type, t.remark, t.created_at
+                FROM `$tb_money_log` t
+                LEFT JOIN `$tb_user` u ON t.userid = u.userid
+                WHERE t.id = ?
+            ";
 
-        // 参数验证
-        if ($page < 1) $page = 1;
-        if ($pageSize < 1 || $pageSize > 100) $pageSize = 20;
+            $params = [$transactionId];
+            $types = 'i';
 
-        // 构建查询条件
-        $sql = "
-            SELECT t.id, t.userid, u.username, t.money, t.before_money, t.after_money,
-                   t.type, t.remark, t.created_at
-            FROM x_money_log t
-            INNER JOIN x_user u ON t.userid = u.userid
-            WHERE 1=1
-        ";
-        $params = [];
+            // 数据隔离：只能查询本代理下的用户交易
+            if ($this->agentId !== null) {
+                $sql .= " AND t.userid IN (SELECT userid FROM `$tb_user` WHERE fid = ?)";
+                $params[] = $this->agentId;
+                $types .= 'i';
+            }
 
-        // 数据隔离
-        if ($agentId !== null) {
-            $sql .= " AND u.fid = ?";
-            $params[] = $agentId;
-        }
+            $stmt = $this->mysqli->prepare($sql);
+            if (!$stmt) {
+                throw new Exception('Prepare failed: ' . $this->mysqli->error);
+            }
 
-        // 用户筛选
-        if ($userId !== null) {
-            $sql .= " AND t.userid = ?";
-            $params[] = intval($userId);
-        }
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $transaction = $result->fetch_assoc();
+            $stmt->close();
 
-        // 时间范围筛选
-        if ($startTime !== null) {
-            $sql .= " AND t.created_at >= ?";
-            $params[] = $startTime;
-        }
-        if ($endTime !== null) {
-            $sql .= " AND t.created_at <= ?";
-            $params[] = $endTime;
-        }
+            if (!$transaction) {
+                $this->respondError('Transaction not found', ErrorCode::BIZ_RESOURCE_NOT_FOUND, 404);
+            }
 
-        // 类型筛选
-        if ($type !== null && in_array($type, ['deposit', 'withdraw', 'bet', 'win', 'rebate', 'other'])) {
-            $sql .= " AND t.type = ?";
-            $params[] = $type;
-        }
-
-        // 计算总数
-        $countSql = "SELECT COUNT(*) as total FROM (" . $sql . ") as count_query";
-        $stmt = $pdo->prepare($countSql);
-        $stmt->execute($params);
-        $total = $stmt->fetch()['total'];
-
-        // 分页查询
-        $sql .= " ORDER BY t.created_at DESC LIMIT ? OFFSET ?";
-        $params[] = $pageSize;
-        $params[] = ($page - 1) * $pageSize;
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        $transactions = $stmt->fetchAll();
-
-        // 格式化响应数据
-        $data = [];
-        foreach ($transactions as $transaction) {
-            $data[] = [
-                'transaction_id' => $transaction['id'],
-                'user_id' => $transaction['userid'],
+            // 格式化响应数据
+            $data = [
+                'transaction_id' => (int)$transaction['id'],
+                'user_id' => (int)$transaction['userid'],
                 'username' => $transaction['username'],
                 'amount' => floatval($transaction['money']),
                 'balance_before' => floatval($transaction['before_money']),
                 'balance_after' => floatval($transaction['after_money']),
                 'type' => $transaction['type'],
-                'type_text' => getTransactionTypeText($transaction['type']),
                 'remark' => $transaction['remark'],
                 'created_at' => $transaction['created_at']
             ];
+
+            $this->respondSuccess($data);
+
+        } catch (Exception $e) {
+            error_log("Get transaction error: " . $e->getMessage());
+            $this->respondError('Database error', ErrorCode::SYS_DATABASE_ERROR, 500);
         }
-
-        // 记录日志
-        ApiResponse::logApiCall($apiKeyId, $_SERVER['REQUEST_URI'], 'GET', 200, $_SERVER['REMOTE_ADDR']);
-
-        // 返回分页响应
-        ApiResponse::paginated($data, $total, $page, $pageSize);
-
-    } catch (Exception $e) {
-        error_log("Get transactions error: " . $e->getMessage());
-        ApiResponse::error(ErrorCode::SYS_DATABASE_ERROR);
     }
 }
 
-
-/**
- * 查询单条交易记录
- *
- * @param PDO $pdo
- * @param int $transactionId
- * @param int|null $agentId
- * @param int $apiKeyId
- * @return void
- */
-function getTransactionById($pdo, $transactionId, $agentId, $apiKeyId) {
-    try {
-        // 构建查询
-        $sql = "
-            SELECT t.id, t.userid, u.username, t.money, t.before_money, t.after_money,
-                   t.type, t.remark, t.created_at
-            FROM x_money_log t
-            INNER JOIN x_user u ON t.userid = u.userid
-            WHERE t.id = ?
-        ";
-
-        $params = [$transactionId];
-
-        // 数据隔离
-        if ($agentId !== null) {
-            $sql .= " AND u.fid = ?";
-            $params[] = $agentId;
-        }
-
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute($params);
-        $transaction = $stmt->fetch();
-
-        if (!$transaction) {
-            ApiResponse::logApiCall($apiKeyId, $_SERVER['REQUEST_URI'], 'GET', 404, $_SERVER['REMOTE_ADDR']);
-            ApiResponse::error(ErrorCode::BIZ_TRANSACTION_NOT_FOUND);
-        }
-
-        // 格式化响应数据
-        $data = [
-            'transaction_id' => $transaction['id'],
-            'user_id' => $transaction['userid'],
-            'username' => $transaction['username'],
-            'amount' => floatval($transaction['money']),
-            'balance_before' => floatval($transaction['before_money']),
-            'balance_after' => floatval($transaction['after_money']),
-            'type' => $transaction['type'],
-            'type_text' => getTransactionTypeText($transaction['type']),
-            'remark' => $transaction['remark'],
-            'created_at' => $transaction['created_at']
-        ];
-
-        // 记录日志
-        ApiResponse::logApiCall($apiKeyId, $_SERVER['REQUEST_URI'], 'GET', 200, $_SERVER['REMOTE_ADDR']);
-
-        // 返回成功响应
-        ApiResponse::success($data);
-
-    } catch (Exception $e) {
-        error_log("Get transaction by id error: " . $e->getMessage());
-        ApiResponse::error(ErrorCode::SYS_DATABASE_ERROR);
-    }
-}
-
-
-/**
- * 获取交易类型文本
- *
- * @param string $type
- * @return string
- */
-function getTransactionTypeText($type) {
-    switch ($type) {
-        case 'deposit':
-            return '充值';
-        case 'withdraw':
-            return '提现';
-        case 'bet':
-            return '投注';
-        case 'win':
-            return '中奖';
-        case 'rebate':
-            return '返水';
-        case 'other':
-            return '其他';
-        default:
-            return '未知';
-    }
-}
+// 执行控制器
+$controller = new TransactionsController();
+$controller->handle();
