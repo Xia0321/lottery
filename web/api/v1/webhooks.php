@@ -2,215 +2,261 @@
 /**
  * Webhook 管理 API
  *
- * POST /api/v1/webhooks - 创建 Webhook 订阅
- * GET /api/v1/webhooks - 查询 Webhook 列表
- * DELETE /api/v1/webhooks/{id} - 删除 Webhook
- * GET /api/v1/webhooks/{id}/logs - 查询 Webhook 调用日志
+ * POST /api/v1/webhooks.php - 创建 Webhook 订阅
+ * GET /api/v1/webhooks.php - 查询 Webhook 列表
+ * DELETE /api/v1/webhooks.php/{id} - 删除 Webhook
+ * GET /api/v1/webhooks.php/{id}/logs - 查询 Webhook 调用日志
  */
 
-require_once __DIR__ . '/../db_config.php';
+require_once(__DIR__ . '/BaseController.php');
 
-// 强制 HTTPS
-if (empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off') {
-    http_response_code(403);
-    ApiResponse::error(ErrorCode::SYS_SERVICE_UNAVAILABLE, '必须使用 HTTPS 访问');
-}
+class WebhooksController extends BaseController {
 
-// 认证
-$apiAuth = new ApiAuth($pdo, $redis);
-$apiKeyData = $apiAuth->authenticate();
+    public function handle() {
+        // 解析路径
+        $requestUri = $_SERVER['REQUEST_URI'];
+        $method = $this->getMethod();
 
-// 路由处理
-$requestUri = $_SERVER['REQUEST_URI'];
-$requestMethod = $_SERVER['REQUEST_METHOD'];
-
-// 解析路径
-if (preg_match('#/api/v1/webhooks/(\d+)/logs$#', $requestUri, $matches)) {
-    // GET /api/v1/webhooks/{id}/logs
-    if ($requestMethod === 'GET') {
-        getWebhookLogs($pdo, $matches[1], $apiKeyData['id']);
-    } else {
-        ApiResponse::error(ErrorCode::PARAM_INVALID_VALUE, '不支持的请求方法');
-    }
-} elseif (preg_match('#/api/v1/webhooks/(\d+)$#', $requestUri, $matches)) {
-    // DELETE /api/v1/webhooks/{id}
-    if ($requestMethod === 'DELETE') {
-        deleteWebhook($pdo, $matches[1], $apiKeyData['id']);
-    } else {
-        ApiResponse::error(ErrorCode::PARAM_INVALID_VALUE, '不支持的请求方法');
-    }
-} elseif (preg_match('#/api/v1/webhooks$#', $requestUri)) {
-    if ($requestMethod === 'POST') {
-        // POST /api/v1/webhooks
-        createWebhook($pdo, $apiKeyData['id']);
-    } elseif ($requestMethod === 'GET') {
-        // GET /api/v1/webhooks
-        getWebhooks($pdo, $apiKeyData['id']);
-    } else {
-        ApiResponse::error(ErrorCode::PARAM_INVALID_VALUE, '不支持的请求方法');
-    }
-} else {
-    ApiResponse::error(ErrorCode::PARAM_INVALID_VALUE, '无效的请求路径');
-}
-
-
-/**
- * 创建 Webhook 订阅
- *
- * @param PDO $pdo
- * @param int $apiKeyId
- * @return void
- */
-function createWebhook($pdo, $apiKeyId) {
-    try {
-        // 获取 POST 数据
-        $input = json_decode(file_get_contents('php://input'), true);
-
-        if (!$input) {
-            ApiResponse::error(ErrorCode::PARAM_INVALID_FORMAT, '无效的 JSON 格式');
+        // GET /api/v1/webhooks/{id}/logs
+        if (preg_match('#/api/v1/webhooks/(\d+)/logs#', $requestUri, $matches)) {
+            $this->requireMethod('GET');
+            $this->getWebhookLogs($matches[1]);
         }
-
-        // 验证必填字段
-        if (empty($input['url'])) {
-            ApiResponse::error(ErrorCode::PARAM_MISSING, '缺少参数: url');
+        // DELETE /api/v1/webhooks/{id}
+        elseif (preg_match('#/api/v1/webhooks/(\d+)#', $requestUri, $matches)) {
+            $this->requireMethod('DELETE');
+            $this->deleteWebhook($matches[1]);
         }
-
-        if (empty($input['events']) || !is_array($input['events'])) {
-            ApiResponse::error(ErrorCode::PARAM_MISSING, '缺少参数: events（必须是数组）');
-        }
-
-        // 验证事件类型
-        $validEvents = ['bet.created', 'bet.won', 'deposit.completed', 'withdrawal.requested'];
-        foreach ($input['events'] as $event) {
-            if (!in_array($event, $validEvents)) {
-                ApiResponse::error(ErrorCode::PARAM_INVALID_VALUE, "无效的事件类型: {$event}");
+        // POST/GET /api/v1/webhooks
+        elseif (preg_match('#/api/v1/webhooks#', $requestUri)) {
+            if ($method === 'POST') {
+                $this->createWebhook();
+            } elseif ($method === 'GET') {
+                $this->getWebhooks();
+            } else {
+                $this->respondError('Method not allowed', ErrorCode::PARAM_INVALID, 405);
             }
         }
-
-        // 创建 Webhook
-        $webhookManager = new WebhookManager($pdo);
-        $webhook = $webhookManager->create($apiKeyId, $input['url'], $input['events']);
-
-        // 记录日志
-        ApiResponse::logApiCall($apiKeyId, $_SERVER['REQUEST_URI'], 'POST', 201, $_SERVER['REMOTE_ADDR']);
-
-        // 返回成功响应
-        ApiResponse::success($webhook, ['http_code' => 201]);
-
-    } catch (Exception $e) {
-        error_log("Create webhook error: " . $e->getMessage());
-        ApiResponse::error(ErrorCode::SYS_DATABASE_ERROR, $e->getMessage());
-    }
-}
-
-
-/**
- * 查询 Webhook 列表
- *
- * @param PDO $pdo
- * @param int $apiKeyId
- * @return void
- */
-function getWebhooks($pdo, $apiKeyId) {
-    try {
-        $webhookManager = new WebhookManager($pdo);
-        $webhooks = $webhookManager->getByApiKey($apiKeyId);
-
-        // 记录日志
-        ApiResponse::logApiCall($apiKeyId, $_SERVER['REQUEST_URI'], 'GET', 200, $_SERVER['REMOTE_ADDR']);
-
-        // 返回成功响应
-        ApiResponse::success($webhooks);
-
-    } catch (Exception $e) {
-        error_log("Get webhooks error: " . $e->getMessage());
-        ApiResponse::error(ErrorCode::SYS_DATABASE_ERROR);
-    }
-}
-
-
-/**
- * 删除 Webhook
- *
- * @param PDO $pdo
- * @param int $webhookId
- * @param int $apiKeyId
- * @return void
- */
-function deleteWebhook($pdo, $webhookId, $apiKeyId) {
-    try {
-        $webhookManager = new WebhookManager($pdo);
-        $success = $webhookManager->delete($webhookId, $apiKeyId);
-
-        if (!$success) {
-            ApiResponse::logApiCall($apiKeyId, $_SERVER['REQUEST_URI'], 'DELETE', 404, $_SERVER['REMOTE_ADDR']);
-            ApiResponse::error(ErrorCode::BIZ_WEBHOOK_NOT_FOUND);
+        else {
+            $this->respondError('Invalid request path', ErrorCode::PARAM_INVALID, 400);
         }
-
-        // 记录日志
-        ApiResponse::logApiCall($apiKeyId, $_SERVER['REQUEST_URI'], 'DELETE', 200, $_SERVER['REMOTE_ADDR']);
-
-        // 返回成功响应
-        ApiResponse::success(['message' => 'Webhook 已删除']);
-
-    } catch (Exception $e) {
-        error_log("Delete webhook error: " . $e->getMessage());
-        ApiResponse::error(ErrorCode::SYS_DATABASE_ERROR);
     }
-}
 
+    /**
+     * 创建 Webhook 订阅
+     */
+    private function createWebhook() {
+        try {
+            // 获取 POST 数据
+            $eventType = $this->getRequiredParam('event_type', 'string', 'POST');
+            $callbackUrl = $this->getRequiredParam('callback_url', 'string', 'POST');
+            $description = $this->getOptionalParam('description', 'string', '', 'POST');
 
-/**
- * 查询 Webhook 调用日志
- *
- * @param PDO $pdo
- * @param int $webhookId
- * @param int $apiKeyId
- * @return void
- */
-function getWebhookLogs($pdo, $webhookId, $apiKeyId) {
-    try {
-        // 验证 Webhook 是否属于当前 API Key
-        $stmt = $pdo->prepare("
-            SELECT id FROM webhooks WHERE id = ? AND api_key_id = ?
-        ");
-        $stmt->execute([$webhookId, $apiKeyId]);
+            // 验证事件类型
+            $validEvents = ['bet.created', 'bet.settled', 'deposit.completed', 'withdrawal.completed'];
+            if (!in_array($eventType, $validEvents)) {
+                $this->respondError("Invalid event type: {$eventType}", ErrorCode::PARAM_INVALID, 400);
+            }
 
-        if (!$stmt->fetch()) {
-            ApiResponse::error(ErrorCode::BIZ_WEBHOOK_NOT_FOUND);
+            // 验证 URL 格式
+            if (!filter_var($callbackUrl, FILTER_VALIDATE_URL)) {
+                $this->respondError('Invalid callback URL format', ErrorCode::PARAM_INVALID, 400);
+            }
+
+            // 生成 Webhook Secret
+            $secret = 'whsec_' . bin2hex(random_bytes(32));
+
+            // 插入数据库
+            global $tb_webhooks;
+            $sql = "
+                INSERT INTO webhooks (api_key_id, event_type, callback_url, secret, description, status, created_at)
+                VALUES (?, ?, ?, ?, ?, 1, NOW())
+            ";
+
+            $stmt = $this->mysqli->prepare($sql);
+            if (!$stmt) {
+                throw new Exception('Prepare failed: ' . $this->mysqli->error);
+            }
+
+            $stmt->bind_param('issss', $this->apiKeyData['id'], $eventType, $callbackUrl, $secret, $description);
+            $stmt->execute();
+            $webhookId = $stmt->insert_id;
+            $stmt->close();
+
+            // 返回数据
+            $data = [
+                'id' => $webhookId,
+                'event_type' => $eventType,
+                'callback_url' => $callbackUrl,
+                'secret' => $secret,
+                'description' => $description,
+                'status' => 1
+            ];
+
+            $this->respondSuccess($data, 'Webhook created successfully');
+
+        } catch (Exception $e) {
+            error_log("Create webhook error: " . $e->getMessage());
+            $this->respondError('Failed to create webhook', ErrorCode::SYS_DATABASE_ERROR, 500);
         }
+    }
 
-        // 获取查询参数
-        $page = isset($_GET['page']) ? intval($_GET['page']) : 1;
-        $pageSize = isset($_GET['page_size']) ? intval($_GET['page_size']) : 20;
+    /**
+     * 查询 Webhook 列表
+     */
+    private function getWebhooks() {
+        try {
+            global $tb_webhooks;
 
-        // 参数验证
-        if ($page < 1) $page = 1;
-        if ($pageSize < 1 || $pageSize > 100) $pageSize = 20;
+            $sql = "
+                SELECT id, event_type, callback_url, secret, description, status, created_at
+                FROM webhooks
+                WHERE api_key_id = ?
+                ORDER BY created_at DESC
+            ";
 
-        // 查询日志
-        $countStmt = $pdo->prepare("SELECT COUNT(*) as total FROM webhook_logs WHERE webhook_id = ?");
-        $countStmt->execute([$webhookId]);
-        $total = $countStmt->fetch()['total'];
+            $stmt = $this->mysqli->prepare($sql);
+            if (!$stmt) {
+                throw new Exception('Prepare failed: ' . $this->mysqli->error);
+            }
 
-        $stmt = $pdo->prepare("
-            SELECT id, event_type, http_code, status, retry_count, created_at
-            FROM webhook_logs
-            WHERE webhook_id = ?
-            ORDER BY created_at DESC
-            LIMIT ? OFFSET ?
-        ");
-        $stmt->execute([$webhookId, $pageSize, ($page - 1) * $pageSize]);
-        $logs = $stmt->fetchAll();
+            $stmt->bind_param('i', $this->apiKeyData['id']);
+            $stmt->execute();
+            $result = $stmt->get_result();
 
-        // 记录日志
-        ApiResponse::logApiCall($apiKeyId, $_SERVER['REQUEST_URI'], 'GET', 200, $_SERVER['REMOTE_ADDR']);
+            $webhooks = [];
+            while ($row = $result->fetch_assoc()) {
+                $webhooks[] = [
+                    'id' => (int)$row['id'],
+                    'event_type' => $row['event_type'],
+                    'callback_url' => $row['callback_url'],
+                    'secret' => $row['secret'],
+                    'description' => $row['description'],
+                    'status' => (int)$row['status'],
+                    'created_at' => $row['created_at']
+                ];
+            }
+            $stmt->close();
 
-        // 返回分页响应
-        ApiResponse::paginated($logs, $total, $page, $pageSize);
+            $this->respondSuccess(['list' => $webhooks, 'total' => count($webhooks)]);
 
-    } catch (Exception $e) {
-        error_log("Get webhook logs error: " . $e->getMessage());
-        ApiResponse::error(ErrorCode::SYS_DATABASE_ERROR);
+        } catch (Exception $e) {
+            error_log("Get webhooks error: " . $e->getMessage());
+            $this->respondError('Database error', ErrorCode::SYS_DATABASE_ERROR, 500);
+        }
+    }
+
+    /**
+     * 删除 Webhook
+     */
+    private function deleteWebhook($webhookId) {
+        try {
+            global $tb_webhooks;
+
+            // 检查 Webhook 是否存在且属于当前 API Key
+            $sql = "DELETE FROM webhooks WHERE id = ? AND api_key_id = ?";
+
+            $stmt = $this->mysqli->prepare($sql);
+            if (!$stmt) {
+                throw new Exception('Prepare failed: ' . $this->mysqli->error);
+            }
+
+            $stmt->bind_param('ii', $webhookId, $this->apiKeyData['id']);
+            $stmt->execute();
+            $affected = $stmt->affected_rows;
+            $stmt->close();
+
+            if ($affected === 0) {
+                $this->respondError('Webhook not found', ErrorCode::BIZ_RESOURCE_NOT_FOUND, 404);
+            }
+
+            $this->respondSuccess(['message' => 'Webhook deleted successfully']);
+
+        } catch (Exception $e) {
+            error_log("Delete webhook error: " . $e->getMessage());
+            $this->respondError('Database error', ErrorCode::SYS_DATABASE_ERROR, 500);
+        }
+    }
+
+    /**
+     * 查询 Webhook 调用日志
+     */
+    private function getWebhookLogs($webhookId) {
+        try {
+            global $tb_webhook_logs;
+
+            // 验证 Webhook 是否属于当前 API Key
+            $sql = "SELECT id FROM webhooks WHERE id = ? AND api_key_id = ?";
+            $stmt = $this->mysqli->prepare($sql);
+            $stmt->bind_param('ii', $webhookId, $this->apiKeyData['id']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($result->num_rows === 0) {
+                $this->respondError('Webhook not found', ErrorCode::BIZ_RESOURCE_NOT_FOUND, 404);
+            }
+            $stmt->close();
+
+            // 分页参数
+            list($page, $pageSize) = $this->getPagination();
+            $offset = ($page - 1) * $pageSize;
+
+            // 查询总数
+            $countSql = "SELECT COUNT(*) as total FROM webhook_logs WHERE webhook_id = ?";
+            $countStmt = $this->mysqli->prepare($countSql);
+            $countStmt->bind_param('i', $webhookId);
+            $countStmt->execute();
+            $countResult = $countStmt->get_result();
+            $total = $countResult->fetch_assoc()['total'];
+            $countStmt->close();
+
+            // 查询日志列表
+            $sql = "
+                SELECT id, event_type, http_code, response_body, status, retry_count, created_at
+                FROM webhook_logs
+                WHERE webhook_id = ?
+                ORDER BY created_at DESC
+                LIMIT ? OFFSET ?
+            ";
+
+            $stmt = $this->mysqli->prepare($sql);
+            $stmt->bind_param('iii', $webhookId, $pageSize, $offset);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            $logs = [];
+            while ($row = $result->fetch_assoc()) {
+                $logs[] = [
+                    'id' => (int)$row['id'],
+                    'event_type' => $row['event_type'],
+                    'http_code' => (int)$row['http_code'],
+                    'response_body' => $row['response_body'],
+                    'status' => $row['status'],
+                    'retry_count' => (int)$row['retry_count'],
+                    'created_at' => $row['created_at']
+                ];
+            }
+            $stmt->close();
+
+            $data = [
+                'list' => $logs,
+                'pagination' => [
+                    'page' => $page,
+                    'page_size' => $pageSize,
+                    'total' => (int)$total,
+                    'total_pages' => (int)ceil($total / $pageSize)
+                ]
+            ];
+
+            $this->respondSuccess($data);
+
+        } catch (Exception $e) {
+            error_log("Get webhook logs error: " . $e->getMessage());
+            $this->respondError('Database error', ErrorCode::SYS_DATABASE_ERROR, 500);
+        }
     }
 }
+
+// 执行控制器
+$controller = new WebhooksController();
+$controller->handle();

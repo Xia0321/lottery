@@ -1,9 +1,10 @@
 <?php
 /**
- * 投注记录查询 API
+ * 投注记录 API
  *
  * GET /api/v1/bets - 查询投注记录列表
  * GET /api/v1/bets/{id} - 查询单个投注记录
+ * POST /api/v1/bets - 创建投注
  */
 
 require_once(__DIR__ . '/BaseController.php');
@@ -11,19 +12,24 @@ require_once(__DIR__ . '/BaseController.php');
 class BetsController extends BaseController {
 
     public function handle() {
-        // 要求 GET 方法
-        $this->requireMethod('GET');
-
         // 解析路径
         $requestUri = $_SERVER['REQUEST_URI'];
+        $method = $this->getMethod();
 
         // GET /api/v1/bets/{id}
         if (preg_match('#/api/v1/bets/(\d+)$#', $requestUri, $matches)) {
+            $this->requireMethod('GET');
             $this->getBetById($matches[1]);
         }
-        // GET /api/v1/bets
+        // POST/GET /api/v1/bets
         elseif (preg_match('#/api/v1/bets(\?.*)?$#', $requestUri)) {
-            $this->getBetsList();
+            if ($method === 'GET') {
+                $this->getBetsList();
+            } elseif ($method === 'POST') {
+                $this->createBet();
+            } else {
+                $this->respondError('Method not allowed', ErrorCode::PARAM_INVALID, 405);
+            }
         }
         else {
             $this->respondError('Invalid request path', ErrorCode::PARAM_INVALID, 400);
@@ -246,6 +252,218 @@ class BetsController extends BaseController {
             error_log("Get bet error: " . $e->getMessage());
             $this->respondError('Database error', ErrorCode::SYS_DATABASE_ERROR, 500);
         }
+    }
+
+    /**
+     * 创建投注
+     */
+    private function createBet() {
+        try {
+            // 获取参数
+            $userId = $this->getRequiredParam('user_id', 'int', 'POST');
+            $gameId = $this->getRequiredParam('game_id', 'int', 'POST');
+            $betAmount = $this->getRequiredParam('bet_amount', 'float', 'POST');
+            $betContent = $this->getRequiredParam('bet_content', 'string', 'POST');
+            $betType = $this->getOptionalParam('bet_type', 'string', 'normal', 'POST');
+
+            // 数据隔离：只能为本代理下的用户创建投注
+            global $tb_user, $tb_bet, $tb_game;
+
+            // 验证用户
+            $sql = "SELECT userid, money, status, fid FROM `$tb_user` WHERE userid = ?";
+            $params = [$userId];
+            $types = 'i';
+
+            if ($this->agentId !== null) {
+                $sql .= " AND fid = ?";
+                $params[] = $this->agentId;
+                $types .= 'i';
+            }
+
+            $stmt = $this->mysqli->prepare($sql);
+            $stmt->bind_param($types, ...$params);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $user = $result->fetch_assoc();
+            $stmt->close();
+
+            if (!$user) {
+                $this->respondError('User not found or access denied', ErrorCode::BIZ_USER_NOT_FOUND, 404);
+            }
+
+            if ($user['status'] != 1) {
+                $this->respondError('User account is disabled', ErrorCode::BIZ_USER_DISABLED, 403);
+            }
+
+            // 验证游戏
+            $stmt = $this->mysqli->prepare("
+                SELECT gameid, minmoney, maxmoney, status FROM `$tb_game` WHERE gameid = ?
+            ");
+            $stmt->bind_param('i', $gameId);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $game = $result->fetch_assoc();
+            $stmt->close();
+
+            if (!$game) {
+                $this->respondError('Game not found', ErrorCode::BIZ_RESOURCE_NOT_FOUND, 404);
+            }
+
+            if ($game['status'] != 1) {
+                $this->respondError('Game is not available', ErrorCode::BIZ_GAME_UNAVAILABLE, 400);
+            }
+
+            // 验证投注金额
+            if ($betAmount < $game['minmoney']) {
+                $this->respondError("Bet amount below minimum ({$game['minmoney']})", ErrorCode::BIZ_BET_AMOUNT_INVALID, 400);
+            }
+
+            if ($betAmount > $game['maxmoney']) {
+                $this->respondError("Bet amount exceeds maximum ({$game['maxmoney']})", ErrorCode::BIZ_BET_AMOUNT_INVALID, 400);
+            }
+
+            // 验证余额
+            if ($user['money'] < $betAmount) {
+                $this->respondError('Insufficient balance', ErrorCode::BIZ_INSUFFICIENT_BALANCE, 400);
+            }
+
+            // 开始事务
+            $this->mysqli->begin_transaction();
+
+            try {
+                // 扣除余额
+                $newBalance = $user['money'] - $betAmount;
+                $stmt = $this->mysqli->prepare("
+                    UPDATE `$tb_user` SET money = ? WHERE userid = ?
+                ");
+                $stmt->bind_param('di', $newBalance, $userId);
+                $stmt->execute();
+                $stmt->close();
+
+                // 创建投注记录
+                // 获取当前期数（简化版，实际应从游戏表获取）
+                $currentPeriod = date('Ymd') . str_pad(date('H'), 3, '0', STR_PAD_LEFT);
+
+                $stmt = $this->mysqli->prepare("
+                    INSERT INTO `$tb_bet` (userid, gameid, qishu, money, bet_content, bet_type, status, created_at)
+                    VALUES (?, ?, ?, ?, ?, ?, 0, NOW())
+                ");
+                $stmt->bind_param('iisdss', $userId, $gameId, $currentPeriod, $betAmount, $betContent, $betType);
+                $stmt->execute();
+                $betId = $stmt->insert_id;
+                $stmt->close();
+
+                // 记录交易日志
+                $beforeMoney = $user['money'];
+                $afterMoney = $newBalance;
+                $remark = "Bet created - Game ID: {$gameId}, Bet ID: {$betId}";
+
+                $stmt = $this->mysqli->prepare("
+                    INSERT INTO x_money_log (userid, money, before_money, after_money, type, remark, created_at)
+                    VALUES (?, ?, ?, ?, 'bet', ?, NOW())
+                ");
+                $stmt->bind_param('iddds', $userId, $betAmount, $beforeMoney, $afterMoney, $remark);
+                $stmt->execute();
+                $stmt->close();
+
+                // 提交事务
+                $this->mysqli->commit();
+
+                // 触发 Webhook（如果有）
+                $this->triggerWebhook('bet.created', [
+                    'bet_id' => $betId,
+                    'user_id' => $userId,
+                    'game_id' => $gameId,
+                    'bet_amount' => $betAmount,
+                    'period' => $currentPeriod
+                ]);
+
+                // 返回成功响应
+                $data = [
+                    'bet_id' => $betId,
+                    'user_id' => $userId,
+                    'game_id' => $gameId,
+                    'period' => $currentPeriod,
+                    'bet_amount' => $betAmount,
+                    'bet_content' => $betContent,
+                    'bet_type' => $betType,
+                    'balance_before' => floatval($beforeMoney),
+                    'balance_after' => floatval($afterMoney),
+                    'status' => 0,
+                    'created_at' => date('Y-m-d H:i:s')
+                ];
+
+                $this->respondSuccess($data, 'Bet created successfully');
+
+            } catch (Exception $e) {
+                // 回滚事务
+                $this->mysqli->rollback();
+                throw $e;
+            }
+
+        } catch (Exception $e) {
+            error_log("Create bet error: " . $e->getMessage());
+            $this->respondError('Failed to create bet', ErrorCode::SYS_DATABASE_ERROR, 500);
+        }
+    }
+
+    /**
+     * 触发 Webhook
+     */
+    private function triggerWebhook($eventType, $data) {
+        try {
+            // 查询该事件类型的 Webhook
+            $sql = "
+                SELECT id, callback_url, secret
+                FROM webhooks
+                WHERE api_key_id = ? AND event_type = ? AND status = 1
+            ";
+
+            $stmt = $this->mysqli->prepare($sql);
+            $stmt->bind_param('is', $this->apiKeyData['id'], $eventType);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            while ($webhook = $result->fetch_assoc()) {
+                // 异步发送 Webhook（简化版，实际应使用队列）
+                $this->sendWebhook($webhook['callback_url'], $webhook['secret'], $eventType, $data);
+            }
+            $stmt->close();
+
+        } catch (Exception $e) {
+            error_log("Trigger webhook error: " . $e->getMessage());
+            // 不中断主流程
+        }
+    }
+
+    /**
+     * 发送 Webhook
+     */
+    private function sendWebhook($url, $secret, $eventType, $data) {
+        // 构建 payload
+        $payload = json_encode([
+            'event' => $eventType,
+            'data' => $data,
+            'timestamp' => time()
+        ]);
+
+        // 生成签名
+        $signature = hash_hmac('sha256', $payload, $secret);
+
+        // 发送请求（使用 curl）
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'X-Webhook-Signature: ' . $signature,
+            'X-Webhook-Event: ' . $eventType
+        ]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+
+        curl_exec($ch);
+        curl_close($ch);
     }
 
     /**
