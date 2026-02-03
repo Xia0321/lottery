@@ -30,34 +30,53 @@ switch ($_REQUEST['xtype']) {
             exit;
         }
 
-        $msql->query("select errortimes from `$tb_user` where username='$user'");
-        $msql->next_record();
-        if ($msql->f(0) >= 5) {
+        // 安全修复：使用 prepared statement 防止 SQL 注入 (2026-02-03)
+        $stmt = $msql->mysqli->prepare("SELECT errortimes FROM `$tb_user` WHERE username = ?");
+        $stmt->bind_param("s", $user);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $errorData = $result->fetch_assoc();
+        $stmt->close();
+
+        if ($errorData && $errorData['errortimes'] >= 5) {
             echo outjs("您的密码错误次数超过5次,请联系上级修改密码!");
             echo openurl('/agent/login.php');
             exit;
         }
-        $sql = "SELECT * FROM `$tb_user` WHERE username='$user' and userpass='$pass' and ifagent=1 ";
-		//var_dump($sql);die;	
-        $msql->query($sql);
-        $msql->next_record();
+
+        // 安全修复：使用 prepared statement
+        $stmt = $msql->mysqli->prepare("SELECT * FROM `$tb_user` WHERE username = ? AND userpass = ? AND ifagent = 1");
+        $stmt->bind_param("ss", $user, $pass);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $userData = $result->fetch_assoc();
+        $stmt->close();
         $ip = getip();
 
         $time = time();
-        if ($msql->f('username') != $user | $msql->f('userpass') != $pass) {
-            $msql->query("insert into `$tb_user_login` set server='$sv',xtype=1,ip='$ip',time=NOW(),ifok='0',username='$user',userpass='$pass',os='$os'");
-            $msql->query("update `$tb_user` set errortimes=errortimes+1 where username='$user'");
-            echo outjs("账号或密码错误。");//.$msql->f('username').$msql->f('userpass').'==='.$user.$pass
+        if (!$userData || $userData['username'] != $user || $userData['userpass'] != $pass) {
+            // 安全修复：使用 prepared statement
+            $stmt = $msql->mysqli->prepare("INSERT INTO `$tb_user_login` (server, xtype, ip, time, ifok, username, userpass, os) VALUES (?, 1, ?, NOW(), '0', ?, ?, ?)");
+            $stmt->bind_param("sssss", $sv, $ip, $user, $pass, $os);
+            $stmt->execute();
+            $stmt->close();
+
+            $stmt = $msql->mysqli->prepare("UPDATE `$tb_user` SET errortimes = errortimes + 1 WHERE username = ?");
+            $stmt->bind_param("s", $user);
+            $stmt->execute();
+            $stmt->close();
+
+            echo outjs("账号或密码错误。");
             echo openurl('/agent/login.php');
             exit;
         }
         unset($_SESSION['login_check_number']);
-        if ($msql->f('status') == 0) {
+        if ($userData['status'] == 0) {
             echo outjs($userdeny);
             echo openurl('/agent/login.php');
             exit;
         }
-        $wid = $msql->f('wid');
+        $wid = $userData['wid'];
         $err = true;
         if ($wid != $_SESSION['wid']) {
             $err = false;
@@ -67,26 +86,40 @@ switch ($_REQUEST['xtype']) {
             //echo openurl('/Login');
             //exit;
         }
-        if($ipa['i'.$msql->f('userid')]!=""){
-            $ip = $ipa['i'.$msql->f('userid')];
+        if($ipa['i'.$userData['userid']]!=""){
+            $ip = $ipa['i'.$userData['userid']];
         }
-        $_SESSION['gid'] = $msql->f('gid');
-        $fsql->query("insert into `$tb_user_login` set xtype='1',ip='$ip',time=NOW(),ifok='1',username='$user',userpass='OK',server='$sv',os='$os'");
-        $fsql->query("update `$tb_user` set logintimes=logintimes+1,lastloginip='$ip',lastlogintime=NOW(),online=1,errortimes=0 where username='$user'");
-        $passcode = (getmicrotime() * 100000000) . $time;
-        $fsql->query("insert into `$tb_online` set page='welcome',passcode='$passcode',xtype='1',userid='" . $msql->f('userid') . "',logintime=NOW(),savetime=NOW(),ip='$ip',server='$sv',wid='$wid',layer='" . $msql->f('layer') . "',os='$os'");
+        $_SESSION['gid'] = $userData['gid'];
+
+        // 安全修复：使用 prepared statement (2026-02-03)
+        $stmt = $fsql->mysqli->prepare("INSERT INTO `$tb_user_login` (xtype, ip, time, ifok, username, userpass, server, os) VALUES ('1', ?, NOW(), '1', ?, 'OK', ?, ?)");
+        $stmt->bind_param("ssss", $ip, $user, $sv, $os);
+        $stmt->execute();
+        $stmt->close();
+
+        $stmt = $fsql->mysqli->prepare("UPDATE `$tb_user` SET logintimes = logintimes + 1, lastloginip = ?, lastlogintime = NOW(), online = 1, errortimes = 0 WHERE username = ?");
+        $stmt->bind_param("ss", $ip, $user);
+        $stmt->execute();
+        $stmt->close();
+
+        $passcode = bin2hex(random_bytes(32)); // 安全修复：使用加密安全的随机数
+
+        $stmt = $fsql->mysqli->prepare("INSERT INTO `$tb_online` (page, passcode, xtype, userid, logintime, savetime, ip, server, wid, layer, os) VALUES ('welcome', ?, '1', ?, NOW(), NOW(), ?, ?, ?, ?, ?)");
+        $stmt->bind_param("sisssis", $passcode, $userData['userid'], $ip, $sv, $wid, $userData['layer'], $os);
+        $stmt->execute();
+        $stmt->close();
         $_SESSION['apasscode'] = $passcode;
-        $_SESSION['auid2'] = $msql->f('userid');
-        $_SESSION['acheck'] = md5($config['allpass'] . $msql->f('userid'));
+        $_SESSION['auid2'] = $userData['userid'];
+        $_SESSION['acheck'] = md5($config['allpass'] . $userData['userid']);
         $_SESSION['sv'] = $sv;
         $_SESSION['ip'] = $ip;
-        if ($msql->f('ifson') == 0) {
+        if ($userData['ifson'] == 0) {
             $_SESSION['atype'] = 1;
-            $_SESSION['auid'] = $msql->f('userid');
+            $_SESSION['auid'] = $userData['userid'];
         } else {
-            $_SESSION['auid'] = $msql->f('fid');
+            $_SESSION['auid'] = $userData['fid'];
         }
-        if ((($time - strtotime($msql->f('passtime'))) / (60 * 60 * 24)) >= $config['passtime'] & $config['passtime'] != 0) {
+        if ((($time - strtotime($userData['passtime'])) / (60 * 60 * 24)) >= $config['passtime'] & $config['passtime'] != 0) {
             echo openurl('/agent/changepass.php?xtype=show&url=login&type=1');
             exit;
         }

