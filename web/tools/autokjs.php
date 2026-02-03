@@ -24,8 +24,18 @@ $kjip = $msql->f('kjip');
 $autoresetpl = $msql->f('autoresetpl');
 $trys = $msql->f('trys');
 
+// 安全修复：使用 prepared statement (2026-02-03)
 if($_REQUEST['gid'] && is_numeric($_REQUEST['gid'])){
-    $game = $msql->arr("select gid,gname,fast,panstatus,otherstatus,otherclosetime,userclosetime,mnum,fenlei,ifopen,autokj,guanfang,cs from `$tb_game` where gid='".$_REQUEST['gid']."' and ifopen=1 order by kjtime desc",1);
+    $gid_param = intval($_REQUEST['gid']);
+    $stmt = $msql->mysqli->prepare("SELECT gid,gname,fast,panstatus,otherstatus,otherclosetime,userclosetime,mnum,fenlei,ifopen,autokj,guanfang,cs FROM `$tb_game` WHERE gid = ? AND ifopen = 1 ORDER BY kjtime DESC");
+    $stmt->bind_param("i", $gid_param);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $game = [];
+    while($row = $result->fetch_assoc()) {
+        $game[] = $row;
+    }
+    $stmt->close();
 }else{
     $game = $msql->arr("select gid,gname,fast,panstatus,otherstatus,otherclosetime,userclosetime,mnum,fenlei,ifopen,autokj,guanfang,cs from `$tb_game` where ifopen=1 order by kjtime desc",1);
 }
