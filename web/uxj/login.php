@@ -18,7 +18,7 @@ switch ($_REQUEST['xtype']) {
         $os = getbrowser($_SERVER['HTTP_USER_AGENT']) . '  ' . getos($_SERVER['HTTP_USER_AGENT']);
         $user = strtoupper($_POST['username']);
         $pass = md5($_POST['pass']. $config['upass']);//echo $pass;die;
-        file_put_contents("pwd.txt",md5($_POST['pass']. $config['upass']),FILE_APPENd);
+        // 安全修复：移除调试代码 (2026-02-03)
         $code = $_POST['code'];
         if ($code != $_SESSION['login_check_number']) {
             echo outjs("验证码错误，请重新输入。");
