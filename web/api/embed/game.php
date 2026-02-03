@@ -2,51 +2,71 @@
 /**
  * 游戏窗口嵌入页面
  *
- * GET /api/embed/game?token={token}
+ * GET /api/embed/game.php?token={token}
  *
  * 外部平台通过 Token 嵌入游戏窗口（iframe）
  */
 
-require_once __DIR__ . '/../db_config.php';
+require_once(__DIR__ . '/../../data/config.inc.php');
+require_once(__DIR__ . '/../../data/db.php');
+require_once(__DIR__ . '/../../global/db.inc.php');
+
+// 配置 X-Frame-Options 允许嵌入
+header('X-Frame-Options: SAMEORIGIN'); // 或使用 ALLOW-FROM https://your-partner-domain.com
 
 // 获取 Token 参数
 $token = $_GET['token'] ?? null;
 
 if (!$token) {
-    showError('缺少 Token 参数');
+    showError('Missing token parameter');
 }
 
 // 验证 Token
-try {
-    $tokenData = validateToken($pdo, $redis, $token);
+global $msql, $tb_user;
+$mysqli = $msql->mysqli;
 
-    if (!$tokenData) {
-        showError('Token 无效或已过期');
+try {
+    // 简化版：使用 JWT 或加密 token（此处使用简单的加密方案）
+    $tokenData = decryptToken($token);
+
+    if (!$tokenData || !isset($tokenData['user_id']) || !isset($tokenData['exp'])) {
+        showError('Invalid or expired token');
     }
 
-    $userId = $tokenData['user_id'];
-    $gameUrl = $tokenData['game_url'];
+    // 检查过期时间
+    if ($tokenData['exp'] < time()) {
+        showError('Token has expired');
+    }
+
+    $userId = (int)$tokenData['user_id'];
+    $gameId = $tokenData['game_id'] ?? 1;
 
     // 查询用户信息
-    $stmt = $pdo->prepare("
+    $stmt = $mysqli->prepare("
         SELECT userid, username, money, status
-        FROM x_user
+        FROM `$tb_user`
         WHERE userid = ?
     ");
-    $stmt->execute([$userId]);
-    $user = $stmt->fetch();
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+    $stmt->close();
 
     if (!$user) {
-        showError('用户不存在');
+        showError('User not found');
     }
 
     if ($user['status'] != 1) {
-        showError('用户账号已被禁用');
+        showError('User account is disabled');
     }
+
+    // 构建游戏 URL（根据实际游戏路径）
+    $gameUrl = "/web/game.php?gameid=" . (int)$gameId;
 
 } catch (Exception $e) {
     error_log("Token validation error: " . $e->getMessage());
-    showError('系统错误，请稍后重试');
+    showError('System error, please try again later');
 }
 
 ?>
@@ -55,7 +75,7 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>游戏窗口</title>
+    <title>Game Window</title>
     <style>
         * {
             margin: 0;
@@ -64,7 +84,7 @@ try {
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background: #f5f5f5;
         }
 
@@ -76,9 +96,9 @@ try {
         }
 
         .game-header {
-            background: #fff;
-            padding: 10px 20px;
-            border-bottom: 1px solid #e0e0e0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 12px 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -87,33 +107,35 @@ try {
         .user-info {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 20px;
         }
 
         .username {
-            font-weight: bold;
-            color: #333;
+            font-weight: 600;
+            color: #fff;
+            font-size: 14px;
         }
 
         .balance {
-            color: #ff6b00;
-            font-weight: bold;
+            color: #ffd700;
+            font-weight: 700;
+            font-size: 16px;
         }
 
         .game-frame {
             flex: 1;
             border: none;
             width: 100%;
+            background: #fff;
         }
 
-        .error-message {
+        .loading {
             display: flex;
             align-items: center;
             justify-content: center;
             height: 100vh;
-            background: #f5f5f5;
-            color: #d32f2f;
-            font-size: 18px;
+            font-size: 16px;
+            color: #666;
         }
     </style>
 </head>
@@ -121,25 +143,30 @@ try {
     <div class="game-container">
         <div class="game-header">
             <div class="user-info">
-                <span class="username"><?php echo htmlspecialchars($user['username']); ?></span>
-                <span class="balance">余额: ¥<?php echo number_format($user['money'], 2); ?></span>
+                <span class="username"><?php echo htmlspecialchars($user['username'], ENT_QUOTES, 'UTF-8'); ?></span>
+                <span class="balance" id="balance">Balance: ¥<?php echo number_format($user['money'], 2); ?></span>
             </div>
         </div>
-        <iframe class="game-frame" src="<?php echo htmlspecialchars($gameUrl); ?>" allowfullscreen></iframe>
+        <iframe class="game-frame" src="<?php echo htmlspecialchars($gameUrl, ENT_QUOTES, 'UTF-8'); ?>" allowfullscreen></iframe>
     </div>
 
     <script>
-        // 定期刷新余额（每 5 秒）
-        setInterval(function() {
-            fetch('<?php echo '/api/v1/users/' . $userId . '/balance'; ?>?api_key=<?php echo urlencode($_GET['api_key'] ?? ''); ?>&timestamp=<?php echo time(); ?>&sign=<?php echo urlencode($_GET['sign'] ?? ''); ?>')
+        // 定期刷新余额（每 10 秒）
+        const userId = <?php echo $userId; ?>;
+
+        function refreshBalance() {
+            fetch('/web/api/embed/balance.php?user_id=' + userId + '&token=<?php echo urlencode($token); ?>')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) {
-                        document.querySelector('.balance').textContent = '余额: ¥' + data.data.balance.toFixed(2);
+                    if (data.success && data.balance !== undefined) {
+                        document.getElementById('balance').textContent = 'Balance: ¥' + parseFloat(data.balance).toFixed(2);
                     }
                 })
                 .catch(err => console.error('Failed to refresh balance:', err));
-        }, 5000);
+        }
+
+        // 每 10 秒刷新一次余额
+        setInterval(refreshBalance, 10000);
     </script>
 </body>
 </html>
@@ -147,57 +174,41 @@ try {
 <?php
 
 /**
- * 验证 Token
+ * 解密 Token
  *
- * @param PDO $pdo
- * @param Redis|null $redis
  * @param string $token
- * @return array|null Token 数据（user_id, game_url）
+ * @return array|null Token 数据
  */
-function validateToken($pdo, $redis, $token) {
+function decryptToken($token) {
     try {
-        // 从数据库查询 Token（假设存储在 game_tokens 表）
-        $stmt = $pdo->prepare("
-            SELECT user_id, game_url, expires_at, nonce
-            FROM game_tokens
-            WHERE token = ? AND status = 1
-        ");
-        $stmt->execute([$token]);
-        $tokenData = $stmt->fetch();
+        // 使用配置文件中的密钥
+        global $config;
+        $secret = $config['api_secret'] ?? 'default_secret_key_change_this';
 
-        if (!$tokenData) {
+        // Base64 解码
+        $encrypted = base64_decode($token);
+        if ($encrypted === false) {
             return null;
         }
 
-        // 验证过期时间
-        if (strtotime($tokenData['expires_at']) < time()) {
+        // AES-256-CBC 解密
+        $iv = substr($secret, 0, 16);
+        $decrypted = openssl_decrypt($encrypted, 'AES-256-CBC', $secret, 0, $iv);
+
+        if ($decrypted === false) {
             return null;
         }
 
-        // 验证 Nonce（防重放攻击）
-        if ($redis) {
-            $nonceKey = "token_nonce:{$tokenData['nonce']}";
-            if ($redis->exists($nonceKey)) {
-                // Token 已被使用
-                return null;
-            }
+        // 解析 JSON
+        $data = json_decode($decrypted, true);
 
-            // 标记 Token 为已使用（TTL 设置为 Token 过期时间）
-            $ttl = strtotime($tokenData['expires_at']) - time();
-            $redis->setex($nonceKey, max($ttl, 1), 1);
-        }
-
-        return [
-            'user_id' => $tokenData['user_id'],
-            'game_url' => $tokenData['game_url']
-        ];
+        return $data;
 
     } catch (Exception $e) {
-        error_log("Token validation error: " . $e->getMessage());
+        error_log("Token decryption error: " . $e->getMessage());
         return null;
     }
 }
-
 
 /**
  * 显示错误信息
@@ -207,11 +218,11 @@ function validateToken($pdo, $redis, $token) {
 function showError($message) {
     ?>
     <!DOCTYPE html>
-    <html lang="zh-CN">
+    <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>错误</title>
+        <title>Error</title>
         <style>
             * {
                 margin: 0;
@@ -219,21 +230,39 @@ function showError($message) {
                 box-sizing: border-box;
             }
 
-            .error-message {
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            }
+
+            .error-container {
                 display: flex;
+                flex-direction: column;
                 align-items: center;
                 justify-content: center;
                 height: 100vh;
                 background: #f5f5f5;
+                padding: 20px;
+            }
+
+            .error-icon {
+                font-size: 48px;
+                color: #d32f2f;
+                margin-bottom: 20px;
+            }
+
+            .error-message {
                 color: #d32f2f;
                 font-size: 18px;
-                font-family: Arial, sans-serif;
+                text-align: center;
             }
         </style>
     </head>
     <body>
-        <div class="error-message">
-            <?php echo htmlspecialchars($message); ?>
+        <div class="error-container">
+            <div class="error-icon">⚠</div>
+            <div class="error-message">
+                <?php echo htmlspecialchars($message, ENT_QUOTES, 'UTF-8'); ?>
+            </div>
         </div>
     </body>
     </html>
