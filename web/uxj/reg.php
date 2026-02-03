@@ -186,7 +186,7 @@ function changeimg(){
 						<tbody>
                            <tr>
 								<th>推荐人帐号：</th>
-								<td><input size="40" id="reg_agent" maxlength="15" value="<?php echo $_GET['agent']; ?>"  
+								<td><input size="40" id="reg_agent" maxlength="15" value="<?php echo htmlspecialchars($_GET['agent'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
 									class="inp-txt" type="text"></td>
 								<td>如果没有可以不写</td>
 							</tr>
@@ -196,7 +196,7 @@ function changeimg(){
 							</tr>
 							<tr>
 								<th>会员账号：</th>
-								<td><input size="40" id="reg_username" maxlength="15" value="<?php echo $_POST['reg_username']; ?>"  
+								<td><input size="40" id="reg_username" maxlength="15" value="<?php echo htmlspecialchars($_POST['reg_username'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"
 									class="validate[required,custom[onlyLetterNumber],minSize[3],maxSize[8]] inp-txt" type="text"></td>
 								<td>账号规则：账号必须为3-8为数字和字母组合</td>
 							</tr>
@@ -226,7 +226,7 @@ function changeimg(){
 							</tr>
 							<tr>
 								<th>真实姓名：</th>
-								<td><input id="reg_name" size="40" maxlength="10" class="validate[required] inp-txt" value="<?php echo $_POST['reg_name']; ?>" ></td>
+								<td><input id="reg_name" size="40" maxlength="10" class="validate[required] inp-txt" value="<?php echo htmlspecialchars($_POST['reg_name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" ></td>
 								<td style="color: #ff0000;">姓名必须与你用于提款的银行户口名字一致，否则无法提款</td>
 							</tr>
 							<tr>
@@ -235,7 +235,7 @@ function changeimg(){
 							</tr>
 							<tr>
 								<th>手机号码：</th>
-								<td><input id="reg_tel" size="40" maxlength="13" class="validate[required] inp-txt" value="<?php echo $_POST['reg_tel']; ?>"></td>
+								<td><input id="reg_tel" size="40" maxlength="13" class="validate[required] inp-txt" value="<?php echo htmlspecialchars($_POST['reg_tel'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"></td>
 								<td style="color: #ff0000;"></td>
 							</tr>
 							<tr>
@@ -245,7 +245,7 @@ function changeimg(){
 							<tr>
 								<th>QQ：</th>
 								<td><input id="reg_qq" size="40" maxlength="30"
-									class="validate[required] inp-txt" type="text" value="<?php echo $_POST['reg_qq']; ?>"></td>
+									class="validate[required] inp-txt" type="text" value="<?php echo htmlspecialchars($_POST['reg_qq'] ?? '', ENT_QUOTES, 'UTF-8'); ?>"></td>
 								<td style="color: #ff0000;"></td>
 							</tr>
 							<tr>

@@ -131,7 +131,7 @@ try {
     <script>
         // 定期刷新余额（每 5 秒）
         setInterval(function() {
-            fetch('<?php echo '/api/v1/users/' . $userId . '/balance'; ?>?api_key=<?php echo $_GET['api_key'] ?? ''; ?>&timestamp=<?php echo time(); ?>&sign=<?php echo $_GET['sign'] ?? ''; ?>')
+            fetch('<?php echo '/api/v1/users/' . $userId . '/balance'; ?>?api_key=<?php echo urlencode($_GET['api_key'] ?? ''); ?>&timestamp=<?php echo time(); ?>&sign=<?php echo urlencode($_GET['sign'] ?? ''); ?>')
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {

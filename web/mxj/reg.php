@@ -251,13 +251,13 @@ function checkform(){
     <div class="rowfield clearfix">
       
         <div class="col1 fl margintop15">推荐人帐号：</div>
-          <div class="col2 fl"><input type="text" id="agent" name="agent" value="<?php echo $_GET['agent']; ?>" class="text field_input">
+          <div class="col2 fl"><input type="text" id="agent" name="agent" value="<?php echo htmlspecialchars($_GET['agent'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="text field_input">
             <div class="red cnsmall1" id='nameTips'>＊如果没有可以不写</div>
           </div>
     </div>  
     <div class="rowfield clearfix">
         <div class="col1 fl margintop15">登录账号：</div>
-          <div class="col2 fl"><input type="text" id="username" name="username" value="<?php echo $_POST['username']; ?>" class="text field_input">
+          <div class="col2 fl"><input type="text" id="username" name="username" value="<?php echo htmlspecialchars($_POST['username'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="text field_input">
             <div class="red cnsmall1" id='nameTips'>＊帐户名由4-10个字符组成</div>
           </div>
     </div>
@@ -275,19 +275,19 @@ function checkform(){
     </div>
     <div class="rowfield clearfix">
         <div class="col1 fl margintop15">真实姓名：</div>
-          <div class="col2 fl"><input type="text" id="name" name="name" value="<?php echo $_POST['name']; ?>" class="text field_input">
+          <div class="col2 fl"><input type="text" id="name" name="name" value="<?php echo htmlspecialchars($_POST['name'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="text field_input">
             <div class="red cnsmall1">＊姓名必须与您提款银行户口名字一致，否则无法提款。</div>
           </div>
     </div>
     <div class="rowfield clearfix">
         <div class="col1 fl margintop15">手机号码：</div>
-          <div class="col2 fl"><input type="text" id="tel" name="tel" value="<?php echo $_POST['tel']; ?>" class="text field_input">
+          <div class="col2 fl"><input type="text" id="tel" name="tel" value="<?php echo htmlspecialchars($_POST['tel'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="text field_input">
             <div class="red cnsmall1">＊</div>
           </div>
     </div>
     <div class="rowfield clearfix">
         <div class="col1 fl margintop15">QQ：</div>
-          <div class="col2 fl"><input type="text" id="qq" name="qq" value="<?php echo $_POST['qq']; ?>" class="text field_input">
+          <div class="col2 fl"><input type="text" id="qq" name="qq" value="<?php echo htmlspecialchars($_POST['qq'] ?? '', ENT_QUOTES, 'UTF-8'); ?>" class="text field_input">
             <div class="red cnsmall1">＊</div>
           </div>
     </div>
