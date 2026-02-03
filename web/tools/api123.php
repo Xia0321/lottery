@@ -20,9 +20,15 @@ if ($_REQUEST['api'] == 'login') {
 		echo json_encode($arr);
         exit;
     }
-    $msql->query("select adminname from `$tb_admins` where adminname='$username' and adminpass='$userpass' ");
-    $msql->next_record();
-    if ($msql->f("adminname") != $username) {
+    // 安全修复：使用 prepared statement (2026-02-03)
+    $stmt = $msql->mysqli->prepare("SELECT adminname FROM `$tb_admins` WHERE adminname = ? AND adminpass = ?");
+    $stmt->bind_param("ss", $username, $userpass);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $admin = $result->fetch_assoc();
+    $stmt->close();
+
+    if (!$admin || $admin["adminname"] != $username) {
         $arr['status'] ='err2';
 		echo json_encode($arr);
         exit;
@@ -60,52 +66,65 @@ if ($_REQUEST['api'] == 'login') {
 	$garr = json_decode($_REQUEST['gstr'],true);
 	$game = array();
 	foreach($garr as $key => $val){
-	   $fsql->query("select thisqishu from `$tb_game` where gid='".$val[0]."' ");
-	   $fsql->next_record();
-	   $msql->query("select * from `$tb_lib` where gid='".$val[0]."' and qishu='".$val[2]."' and qishu<'".$fsql->f('thisqishu')."' order by time desc,tid desc");
+	   // 安全修复：使用 prepared statement (2026-02-03)
+	   $gid_param = intval($val[0]);
+	   $stmt = $fsql->mysqli->prepare("SELECT thisqishu FROM `$tb_game` WHERE gid = ?");
+	   $stmt->bind_param("i", $gid_param);
+	   $stmt->execute();
+	   $result = $stmt->get_result();
+	   $gameData = $result->fetch_assoc();
+	   $stmt->close();
+
+	   $qishu_param = $val[2];
+	   $thisqishu = $gameData['thisqishu'] ?? '';
+	   $stmt2 = $msql->mysqli->prepare("SELECT * FROM `$tb_lib` WHERE gid = ? AND qishu = ? AND qishu < ? ORDER BY time DESC, tid DESC");
+	   $stmt2->bind_param("iss", $gid_param, $qishu_param, $thisqishu);
+	   $stmt2->execute();
+	   $result2 = $stmt2->get_result();
 	   $i=0;
 	   $arr=array();
 	   $tmp=array();
 	   $zs=0;
 	   $zje=0;
-	   while($msql->next_record()){
-			if($tmp['g'.$msql->f('gid')]==''){
-				$tmp['g'.$msql->f('gid')] = transgame($msql->f('gid'),'gname');
-			}		
-			if($tmp['b'.$msql->f('gid').$msql->f('bid')]==''){
-				$tmp['b'.$msql->f('gid').$msql->f('bid')] = transb8('name', $msql->f('bid'),$msql->f('gid'));
+	   while($row = $result2->fetch_assoc()){
+			if($tmp['g'.$row['gid']]==''){
+				$tmp['g'.$row['gid']] = transgame($row['gid'],'gname');
 			}
-			if($tmp['s'.$msql->f('gid').$msql->f('sid')]==''){
-				$tmp['s'.$msql->f('gid').$msql->f('sid')] = transs8('name', $msql->f('sid'),$msql->f('gid'));
+			if($tmp['b'.$row['gid'].$row['bid']]==''){
+				$tmp['b'.$row['gid'].$row['bid']] = transb8('name', $row['bid'],$row['gid']);
 			}
-			if($tmp['c'.$msql->f('gid').$msql->f('cid')]==''){
-				$tmp['c'.$msql->f('gid').$msql->f('cid')] = transc8('name', $msql->f('cid'),$msql->f('gid'));
+			if($tmp['s'.$row['gid'].$row['sid']]==''){
+				$tmp['s'.$row['gid'].$row['sid']] = transs8('name', $row['sid'],$row['gid']);
 			}
-			if($tmp['p'.$msql->f('gid').$msql->f('pid')]==''){
-				$tmp['p'.$msql->f('gid').$msql->f('pid')] = transp8('name', $msql->f('pid'),$msql->f('gid'));
+			if($tmp['c'.$row['gid'].$row['cid']]==''){
+				$tmp['c'.$row['gid'].$row['cid']] = transc8('name', $row['cid'],$row['gid']);
 			}
-			$arr[$i]['gid'] = $tmp['g'.$msql->f('gid')];
-			$arr[$i]['wf'] = wf($msql->f('gid'),$tmp['b' . $msql->f('gid') . $msql->f('bid')],$tmp['s' . $msql->f('gid') . $msql->f('sid')],$tmp['c' . $msql->f('gid') . $msql->f('cid')],$tmp['p' . $msql->f('gid') . $msql->f('pid')]);
-			$arr[$i]['abcd'] = $msql->f("abcd");
-			$arr[$i]['je'] = $msql->f("je");
-			$arr[$i]['time'] = $msql->f("time");
-			$arr[$i]['qishu'] = $msql->f("qishu");
-			$arr[$i]['peilv1'] = $msql->f("peilv1");
-			$arr[$i]['points'] = $msql->f("points");
-			$arr[$i]['tid'] = $msql->f("tid");
-			if($tmp['u'.$msql->f('userid')]==''){
-			   $tmp['u'.$msql->f('userid')] = transuser($msql->f('userid'),"username");
+			if($tmp['p'.$row['gid'].$row['pid']]==''){
+				$tmp['p'.$row['gid'].$row['pid']] = transp8('name', $row['pid'],$row['gid']);
 			}
-			 $arr[$i]['user'] = $tmp['u'.$msql->f('userid')];
-			 $zje += $msql->f('je');
+			$arr[$i]['gid'] = $tmp['g'.$row['gid']];
+			$arr[$i]['wf'] = wf($row['gid'],$tmp['b' . $row['gid'] . $row['bid']],$tmp['s' . $row['gid'] . $row['sid']],$tmp['c' . $row['gid'] . $row['cid']],$tmp['p' . $row['gid'] . $row['pid']]);
+			$arr[$i]['abcd'] = $row["abcd"];
+			$arr[$i]['je'] = $row["je"];
+			$arr[$i]['time'] = $row["time"];
+			$arr[$i]['qishu'] = $row["qishu"];
+			$arr[$i]['peilv1'] = $row["peilv1"];
+			$arr[$i]['points'] = $row["points"];
+			$arr[$i]['tid'] = $row["tid"];
+			if($tmp['u'.$row['userid']]==''){
+			   $tmp['u'.$row['userid']] = transuser($row['userid'],"username");
+			}
+			 $arr[$i]['user'] = $tmp['u'.$row['userid']];
+			 $zje += $row['je'];
 			 $zs++;
 			 $i++;
 	   }
+	   $stmt2->close();
 	   $arr[0]['zs'] = $zs;
 	   $arr[0]['zje'] = $zje;
-	   $game[$key]["nr"] = $arr;	  
+	   $game[$key]["nr"] = $arr;
 	   $game[$key]["zs"] = $zs;
-	   $game[$key]["thisqishu"] = $fsql->f('thisqishu'); 
+	   $game[$key]["thisqishu"] = $thisqishu; 
 	   $game[$key]["gname"] = $val[1];
 	   $game[$key]["gid"] = $val[0];
 	   $msql->query("select editstart,editend from `$tb_config`");
@@ -127,14 +146,20 @@ if ($_REQUEST['api'] == 'login') {
 	}
 	$d = $_REQUEST['d'];
 	$gname = $_REQUEST['gname'];
-	$msql->query("select gid,gname from `$tb_game` where `gname`='$gname'");
-	$msql->next_record();
-	if($msql->f("gname")!=$gname){
+	// 安全修复：使用 prepared statement (2026-02-03)
+	$stmt = $msql->mysqli->prepare("SELECT gid, gname FROM `$tb_game` WHERE gname = ?");
+	$stmt->bind_param("s", $gname);
+	$stmt->execute();
+	$result = $stmt->get_result();
+	$gameData = $result->fetch_assoc();
+	$stmt->close();
+
+	if(!$gameData || $gameData["gname"] != $gname){
         $arr['status'] ='err5';
 		echo json_encode($arr);
         exit;
 	}
-	$gid = $msql->f('gid');
+	$gid = $gameData['gid'];
 	
 if (!preg_match ("/\d{4}-1[0-2]|0?[1-9]-0?[1-9]|[12][0-9]|3[01]/", $d)){
    $d = date("Y-m-d");
@@ -144,40 +169,44 @@ if (!preg_match ("/\d{4}-1[0-2]|0?[1-9]-0?[1-9]|[12][0-9]|3[01]/", $d)){
 	   
     $start = $d." ".$msql->f("editend");
 	$ends = date("Y-m-d",strtotime($start)+86400)." ".$msql->f("editstart");
-	//echo "select * from `$tb_lib` where gid='$gid' and time>='$start' and time<='$ends'";
-	$msql->query("select * from `$tb_lib` where gid='$gid' and time>='$start' and time<='$ends'");
+	// 安全修复：使用 prepared statement (2026-02-03)
+	$stmt = $msql->mysqli->prepare("SELECT * FROM `$tb_lib` WHERE gid = ? AND time >= ? AND time <= ?");
+	$stmt->bind_param("iss", $gid, $start, $ends);
+	$stmt->execute();
+	$result = $stmt->get_result();
 	$tmp=array();
-	while($msql->next_record()){
-			if($tmp['g'.$msql->f('gid')]==''){
-				$tmp['g'.$msql->f('gid')] = transgame($msql->f('gid'),'gname');
-			}		
-			if($tmp['b'.$msql->f('gid').$msql->f('bid')]==''){
-				$tmp['b'.$msql->f('gid').$msql->f('bid')] = transb8('name', $msql->f('bid'),$msql->f('gid'));
+	while($row = $result->fetch_assoc()){
+			if($tmp['g'.$row['gid']]==''){
+				$tmp['g'.$row['gid']] = transgame($row['gid'],'gname');
 			}
-			if($tmp['s'.$msql->f('gid').$msql->f('sid')]==''){
-				$tmp['s'.$msql->f('gid').$msql->f('sid')] = transs8('name', $msql->f('sid'),$msql->f('gid'));
+			if($tmp['b'.$row['gid'].$row['bid']]==''){
+				$tmp['b'.$row['gid'].$row['bid']] = transb8('name', $row['bid'],$row['gid']);
 			}
-			if($tmp['c'.$msql->f('gid').$msql->f('cid')]==''){
-				$tmp['c'.$msql->f('gid').$msql->f('cid')] = transc8('name', $msql->f('cid'),$msql->f('gid'));
+			if($tmp['s'.$row['gid'].$row['sid']]==''){
+				$tmp['s'.$row['gid'].$row['sid']] = transs8('name', $row['sid'],$row['gid']);
 			}
-			if($tmp['p'.$msql->f('gid').$msql->f('pid')]==''){
-				$tmp['p'.$msql->f('gid').$msql->f('pid')] = transp8('name', $msql->f('pid'),$msql->f('gid'));
+			if($tmp['c'.$row['gid'].$row['cid']]==''){
+				$tmp['c'.$row['gid'].$row['cid']] = transc8('name', $row['cid'],$row['gid']);
 			}
-			if($tmp['u'.$msql->f('userid')]==''){
-			   $tmp['u'.$msql->f('userid')] = transuser($msql->f('userid'),"username");
+			if($tmp['p'.$row['gid'].$row['pid']]==''){
+				$tmp['p'.$row['gid'].$row['pid']] = transp8('name', $row['pid'],$row['gid']);
+			}
+			if($tmp['u'.$row['userid']]==''){
+			   $tmp['u'.$row['userid']] = transuser($row['userid'],"username");
 			}
 
-			
-			$arr[$tmp['u'.$msql->f('userid')].$msql->f("tid")]['gid'] =$tmp['g'.$msql->f('gid')];
-			$arr[$tmp['u'.$msql->f('userid')].$msql->f("tid")]['qishu'] = $msql->f("je");
-			$arr[$tmp['u'.$msql->f('userid')].$msql->f("tid")]['je'] = $msql->f("je");
-			$arr[$tmp['u'.$msql->f('userid')].$msql->f("tid")]['tid'] = $msql->f("tid");
-			$arr[$tmp['u'.$msql->f('userid')].$msql->f("tid")]['user'] = $msql->f("tid");
-			$arr[$tmp['u'.$msql->f('userid')].$msql->f("tid")]['time'] = $msql->f("time");
-			$arr[$tmp['u'.$msql->f('userid')].$msql->f("tid")]['wf'] =  wf($msql->f('gid'),$tmp['b' . $msql->f('gid') . $msql->f('bid')],$tmp['s' . $msql->f('gid') . $msql->f('sid')],$tmp['c' . $msql->f('gid') . $msql->f('cid')],$tmp['p' . $msql->f('gid') . $msql->f('pid')]);
-			
-	
+
+			$arr[$tmp['u'.$row['userid']].$row["tid"]]['gid'] =$tmp['g'.$row['gid']];
+			$arr[$tmp['u'.$row['userid']].$row["tid"]]['qishu'] = $row["je"];
+			$arr[$tmp['u'.$row['userid']].$row["tid"]]['je'] = $row["je"];
+			$arr[$tmp['u'.$row['userid']].$row["tid"]]['tid'] = $row["tid"];
+			$arr[$tmp['u'.$row['userid']].$row["tid"]]['user'] = $row["tid"];
+			$arr[$tmp['u'.$row['userid']].$row["tid"]]['time'] = $row["time"];
+			$arr[$tmp['u'.$row['userid']].$row["tid"]]['wf'] =  wf($row['gid'],$tmp['b' . $row['gid'] . $row['bid']],$tmp['s' . $row['gid'] . $row['sid']],$tmp['c' . $row['gid'] . $row['cid']],$tmp['p' . $row['gid'] . $row['pid']]);
+
+
 	}
+	$stmt->close();
 	$arr["status"] ='ok';
 	echo json_encode($arr);
 }
