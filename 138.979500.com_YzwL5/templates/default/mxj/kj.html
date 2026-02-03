@@ -1,0 +1,43 @@
+{+include file='header.html'+}
+
+    </head>
+  <body class="playnav"><script id=myjs language="javascript">var js=1;var sss='kj';</script>
+    <header class='header-model tc rel fw700' style="text-align:left"> 
+<select class="game sele">
+         {+section name=i loop=$gamecs+}
+         
+           <option value="{+$gamecs[i].gid+}" {+if  $gid==$gamecs[i].gid+}selected{+/if+}>{+$gamecs[i].gname+}</option>
+          
+          
+         {+/section+} 
+      </select>
+      转到<SELECT class="sele page"></SELECT>页
+      <span class="abs btn-h btn-r back">返回</span>
+        </header>
+        <NAV class='nav-model fw700'>
+			<ul class='w100 tc'>
+				<li class='nav-li dc l-bg lib' >未结明细</li>
+				<li class='nav-li dc l-bg bao' >账户历史</li>
+				<li class='nav-li dc l-bg onselect kj'>开奖结果</li>
+			</ul>
+		</NAV>
+
+<table class="wd100 list libs" id=printtb>
+<thead>
+
+<tr><th width="20%">期数</th><th width="60%">号码</th><th width="20%" class="hename"></th></tr>
+      </thead>
+      <tbody class="con">
+      </tbody>
+</table>
+<SCRIPT language="javascript">
+var ngid = {+$gid+};
+sma=[];
+     sma['紅'] = new Array(01,02,07,08,12,13,18,19,23,24,29,30,34,35,40,45,46); 
+     sma['藍'] = new Array(03,04,09,10,14,15,20,25,26,31,36,37,41,42,47,48); 
+     sma['綠'] = new Array(05,06,11,16,17,21,22,27,28,32,33,38,39,43,44,49); 
+var tspage=1;
+</SCRIPT>
+
+    </body>
+</html>

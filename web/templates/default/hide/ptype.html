@@ -1,0 +1,58 @@
+{+include file='header2.html'+}
+<style>
+td,th{height:30px;line-height:30px;}
+tr:hover{background:#DEEFD8}
+.txt{width:150px;}
+</style>
+</head>
+<body>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='ptype';</script>
+<div class="main">
+	<div class="top_info">
+		<span class="title">默认赔率设置</span><span class="right"></span>
+	</div>
+	
+	<div class="contents param_panel">	
+		<div class="game_class">
+				<ul>
+{+if $config.fasttype==1+}
+<li><span>快开彩</span>
+{+section name=i loop=$game+}
+    {+if $game[i].fast==1+}<a href="javascript:void(0)" class="g{+$game[i].gid+}"  gid='{+$game[i].gid+}'>{+$game[i].gname+}</a>{+/if+}
+ {+/section+}
+</li>
+{+/if+}
+{+if $config.slowtype==1+}
+<li><span>低频彩</span>
+{+section name=i loop=$game+}
+    {+if $game[i].fast==0+}<a href="javascript:void(0)" class="g{+$game[i].gid+}" gid='{+$game[i].gid+}'>{+$game[i].gname+}</a>{+/if+}
+ {+/section+}
+</li>
+{+/if+}
+				</ul>
+			</div>
+			
+<table class="data_table list">
+  <thead>
+<tr>
+  <th>ID</th><th>类别</th><th>赔率</th>
+</tr></thead>
+<tbody>
+{+section name=i loop=$ptype+}
+<tr><td>{+$ptype[i].id+}</td><td><input type="text" class="txt c" value="{+$ptype[i].c+}" /></td><td><input type="text" class="txt p" value="{+$ptype[i].p+}" /></td></tr>
+{+/section+}
+ </tbody>
+</table>
+
+
+	</div>
+		<div class="control">
+			<input type="button" gid="{+$gid+}" class="button yiwotongbu" value="同步{+$flname+}">&nbsp;&nbsp;&nbsp;<input type="button" value="保存" class="button send">&nbsp;&nbsp;&nbsp;<input type="button" value="新增" class="button add">&nbsp;&nbsp;&nbsp;<input type="button" value="删除" class="button del">
+		</div>
+</div>
+<script language="javascript">
+var gid={+$gid+};
+</script>
+<div id='test'></div>
+</body>
+</html>

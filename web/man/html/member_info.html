@@ -1,0 +1,68 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Welcome</title>
+<link rel="stylesheet" type="text/css" href="/default/css/table.css" />
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/libs.js"></script>
+<script type="text/javascript" src="/default/js/skin.js"></script>
+</head>
+<body>
+<div class="user_info_table">
+<table class="table user_info">
+<thead><tr><th colspan="2">会员资料</th></tr></thead>
+<tbody>
+<tr><th>会员账号</th><td>{+$us.username+}</td></tr>
+<tr><th>会员名称</th><td>{+$us.name+}</td></tr>
+<tr><th>所属盘口</th><td>{+$us.defaultpan+} 盘</td></tr>
+<tr><th>账户状态</th><td>{+if ($us.status==1)+}启用{+elseif ($us.status==2)+}冻结{+else+}停用{+/if+}</td></tr>
+<tr><th>快开彩额度</th>
+<td>{+$us.kmaxmoney+} (余额:{+$us.kmoney+})</td></tr>
+</tbody>
+</table>
+</div>
+<br/>
+<script language="javaScript">
+	$(function() {
+		//设置当前页菜单默认值
+		var curLocation = location.href.split("/");
+		var params = curLocation.slice(curLocation.length-1, curLocation.length).toString(String).split(".").slice(0, 1).toString(String).toLowerCase().split("?");
+		if(params.length > 1){
+			$('#info').addClass("active");	
+		}else{
+			$('#infogame').addClass("active");	
+		}
+	})
+</script>
+<div>
+	<div class="tab-wrapper">
+		<a id="info" href="info?lottery=BJPK10">彩票类</a>
+		
+	</div>
+</div><div class="info_body">
+<div class="game_class">
+<ul>
+<li><span>快开彩</span>
+<a href="info?lottery=CQHLSX">重庆欢乐生肖</a><a href="info?lottery=SGFT">SG飞艇</a><a href="info?lottery=BJPK10" class="selected">北京赛车(PK10)</a><a href="info?lottery=XYSSC">幸运时时彩</a><a href="info?lottery=PK10JSC">极速赛车</a><a href="info?lottery=SSCJSC">极速时时彩</a><a href="info?lottery=LUCKYSB">极速飞艇</a><a href="info?lottery=AULUCKY5">澳洲幸运5</a><a href="info?lottery=AULUCKY10">澳洲幸运10</a><a href="info?lottery=AULUCKY20">澳洲幸运20</a><a href="info?lottery=GDKLSF">广东快乐十分</a><a href="info?lottery=XYNC">重庆幸运农场</a><a href="info?lottery=AULUCKY8">澳洲幸运8</a><a href="info?lottery=KLSFJSC">极速快乐十分</a><a href="info?lottery=XYFT">幸运飞艇</a>
+</li>
+</ul>
+</div>
+<table class="list table data_table">
+<thead><tr><th>玩法</th>
+<th>A盘退水</th>
+<th>单注最低</th><th>单注最高</th><th>单期最高</th></tr></thead>
+<tbody>
+	{+section name=i loop=$points+}
+<tr>
+<th>1-10车号</th>
+<td class="cm">{+$points[i].point+}%</td>
+<td>1</td>
+<td>{+$points[i].maxje+}</td>
+<td>{+$points[i].cmaxje+}</td>
+</tr>
+{+/section+}
+</tbody>
+</table>
+</div></body>
+</html>

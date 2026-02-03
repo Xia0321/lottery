@@ -1,0 +1,135 @@
+{+include file='header2.html'+}
+<style type="text/css">
+	tr:hover{background:#deedfe}
+	</style>
+</head>
+<body id="topbody">
+<script id=myjs language="javascript">var mulu='{+$mulu+}';
+var js=1;var sss='creditnew';
+</script>
+<div class="main">
+<div class="top_info">
+<span class="title">用户资料</span>
+</div>
+<div class="contents">
+<table class="data_table user_info">
+<thead><tr><th colspan="2">基本信息</th></tr></thead>
+<tbody>
+<tr><th>账号</th><td>{+$username|strtolower+}({+$name+})[{+$usertype+}]</td></tr>
+{+if $config.fasttype==1+}
+<tr><th>快开彩额度</th>
+<td>{+$kmaxmoney+}<!-- (余额:{+$kmoney+})--></td></tr>
+{+/if+}
+{+if $config.slowtype==1+}
+<tr><th>低频彩额度</th>
+<td>{+$maxmoney+}<!-- (余额:{+$money+})--></td></tr>
+{+/if+}
+{+if $maxrenflag==1+}
+   <tr>
+   <th>最多下线数</th>
+   <td>{+$maxren+} (余:{+$ren+})</td></tr>
+     </tr>
+{+/if+}
+
+   <TR style="display: none">
+    <th>盘口类型</th>
+    <TD>{+foreach item=i from=$pan+}    
+     <label>{+$i+}</label>    
+     {+/foreach+}</td>
+     </TR>
+     <tr style="display:none">
+    <th>默认盘口</th>
+    <TD><select class="pan">
+         {+foreach item=i from=$pan+}
+           <option value="{+$i+}" {+if $i==$defaultpan+}selected{+/if+}>{+$i+}</option>
+         {+/foreach+}
+      </select><input style="margin-left:5px;" type="button" value="更改" class="editpan btn2 btnf" /></td>
+   </tr>
+   <tr style="display: none;"><th>登录默认彩种</th>
+    <TD><select class="gametype">
+    {+section name=i loop=$ugame+}
+    <OPTION value="{+$ugame[i].gid+}" {+if $ugame[i].gid==$ugid +}selected{+/if+}>{+$ugame[i].gname+}</OPTION>
+    {+/section+}
+    </select><input style="margin-left:5px;" type="button" value="更改" class="editgid btn2 btnf" /></td>
+    </tr>
+{+if ($layer==1 & $ifexe==1)+}
+   <TR style="display:none">
+    <Th>赔率模式</Th>
+    <Td>
+        
+        
+        <select class="pself">
+            <option value="0" {+if $pself==0+}selected{+/if+}>使用上级赔率</option>
+            <option value="1" {+if $pself==1+}selected{+/if+}>使用自定赔率</option>
+            </select>
+        <input type="button" class="btn1 btnf editpself" value="修改" />
+        
+    </Td>
+    </TR>    {+/if+}
+</tbody>
+</table>
+<br/>
+<div class="info_body">
+<div class="game_class">
+<ul>
+{+if $config.fasttype==1+}
+<li><span>快开彩</span>
+{+section name=i loop=$game+}
+    {+if $game[i].fast==1+}<a href="javascript:void(0)" class="g{+$game[i].gid+}"  gid='{+$game[i].gid+}'>{+$game[i].gname+}</a>{+/if+}
+ {+/section+}
+</li>
+{+/if+}
+{+if $config.slowtype==1+}
+<li><span>低频彩</span>
+{+section name=i loop=$game+}
+    {+if $game[i].fast==0+}<a href="javascript:void(0)" class="g{+$game[i].gid+}" gid='{+$game[i].gid+}'>{+$game[i].gname+}</a>{+/if+}
+ {+/section+}
+</li>
+{+/if+}
+</ul>
+</div>
+<table class="table data_table">
+<thead><tr><th>类别</th>
+    {+foreach item=i from=$span+}
+    <th  class="{+$i+} p">{+$i+}盘退水</th>
+    {+/foreach+} <th>单注最低</th><th>单注最高</th><th>单期最高</th></tr>
+   <tr> 
+</thead>
+<tbody>
+   {+section name=i loop=$game+} 
+   {+assign var=pan value=$game[i].pan+}
+   {+section name=j loop=$pan+}
+   <tr gid='{+$game[i].gid+}' class="gametr g{+$game[i].gid+}">
+    <th class="{+$pan[j].class+}" gid='{+$game[i].gid+}'>{+$pan[j].name+}</th>
+
+   {+if $pan[j].abcd==1+}
+        {+foreach item=k from=$span+}   
+           {+assign var='m' value=$k|@strtolower+}
+           {+if $pan[j].ab==1+}
+               {+assign var="tmp1" value="points`$m`a"+}
+               {+assign var="tmp2" value="points`$m`b"+}
+               <td class='cm'>{+$pan[j].$tmp1+}/{+$pan[j].$tmp2+}%</td>
+           {+else+}
+                {+assign var="tmp" value="points`$m`0"+}
+                <td class='cm'>{+$pan[j].$tmp+}%</td>
+            {+/if+} 
+        {+/foreach+}
+    {+else+}
+         {+assign var="tmp" value=$span|@count+}
+         {+assign var="tmp2" value=$tmp*2+}
+         <td colspan="{+$tmp2+}"  class='cm'>{+$pan[j].pointsa0+}%</td>
+    {+/if+}
+    <td>{+$pan[j].minje+}</td> 
+    <td>{+$pan[j].maxje+}</td>
+    <td>{+$pan[j].cmaxje+}</td>
+    
+    </tr>
+   {+/section+}
+   {+/section+}
+
+</tbody>
+</table>
+</div></div>
+</div>
+</body>
+</html>

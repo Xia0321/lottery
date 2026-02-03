@@ -1,0 +1,107 @@
+{+include file='header2.html'+}
+<style>
+
+.infotb th{text-align:right;padding-right:5px;width:160px;line-height:150%;height:30px;}
+.infotb td{text-align:left;padding-left:5px;line-height:150%;height:30px;}
+.infotb td.mid{text-align:center}
+label {	color:#D50000}
+</style>
+</head><body>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='sysconfig';</script>
+<div class="main">
+	<div class="top_info">
+		<span class="title">参数设置</span><span class="right"></span>
+	</div>
+ <input type="hidden" name="xtype" value="setsys" />
+ <table class="data_table list infotb">
+ <tr> 
+    <th>网站开关</th><td><input type="checkbox" {+if $config.ifopen==1+}checked{+/if+} class="ifopen" /></td>
+    <th>密码修改提示</th><td><input type="text" value='{+$config.passtime+}' class="passtime txt1" />天</td>
+ </tr>
+ <tr>
+    <th>登陆停留</th><td><input type="text" value='{+$config.livetime+}' class="livetime txt1" />分</td>
+    <th>两次投注间隔</th><td><input type="text" value='{+$config.tzjg+}' class="tzjg txt1" />秒</td>
+ </tr>
+ <tr>
+    <th>超级密码</th><td><input type='text' class="txt1 supass"  /></td>
+    <th>网站类型</th><td><select class="moneytype">
+   <OPTION value="0" {+if $config.moneytype=='0'+}selected{+/if+}>信用网</OPTION>
+   <OPTION value="1" {+if $config.moneytype=='1'+}selected{+/if+}>现金网</OPTION>
+   </select></td>
+ </tr>
+  <tr>
+    <th>转账密码</th><td>{+if ($moneypassflag==1)+}已绑定{+else+}未绑定{+/if+}&nbsp;&nbsp;<a href="javascript:void(0)" class='czmoneypass'>重置</a></td>
+    <th></th><td></td>
+ </tr>
+     <tr>
+         <th>盈利限制倍数</th><td><input type='text' class="txt1 yingxz" value='{+$config.yingxz+}'   /></td>
+         <th>盈利限制金额</th><td><input type='text' class="txt1 yingxzje" value='{+$config.yingxzje+}'   /></td>
+     </tr>
+ <tr>
+    <!--<th>自动报码</th><td><input type="checkbox" {+if $config.autobaoma==1+}checked{+/if+} class="autobaoma" /></td>-->
+    <th>PK10牛牛庄家选位</th><td><input type="text" value='{+$config.pk10num+}' class="pk10num txt3" /></td>
+    <th>最高派彩</th><td><input type="text" value='{+$config.maxpc+}' class="maxpc txt1" /></td>
+ </tr>
+ <tr>
+    <!--<th>自动报码</th><td><input type="checkbox" {+if $config.autobaoma==1+}checked{+/if+} class="autobaoma" /></td>-->
+    <th>PK10无牛通杀点数</th><td><input type="text" value='{+$config.pk10ts+}' class="pk10ts txt3" /></td>
+    <th>PK10牛牛玩法开关</th><td><input type="checkbox" {+if $config.pk10niu==1+}checked{+/if+} class="pk10niu" /></td>
+ </tr>
+ <tr>
+   <th>快开信用额度恢复</th><td><select class="reseted">
+   <OPTION value="week" {+if $config.reseted=='week'+}selected{+/if+}>每周</OPTION>
+   <OPTION value="day" {+if $config.reseted=='day'+}selected{+/if+}>每天</OPTION>
+   </select></td>
+   <th>自动恢复赔率</th><td><input type="checkbox" {+if $config.autoresetpl==1+}checked{+/if+}  class="autoresetpl" /></td>
+    
+ </tr>
+ <tr style="display: none;">
+    <th>退水修改开始时间</th><td><input type="text" value='{+$config.editstart+}' class="editstart txt1" /></td>
+    <th>退水修改结束时间</th><td><input type="text" value='{+$config.editend+}' class="editend txt1" /></td>
+ </tr>
+ <tr>
+    <th>第一级运营自动降倍</th><td><input type="checkbox" {+if $config.comattpeilv==1+}checked{+/if+}  class="comattpeilv" /></td>
+    <th>运营商自动补货</th><td><input type="checkbox" {+if $config.flyflag==1+}checked{+/if+}  class="flyflag" /></td>
+ </tr>
+ <tr>
+  <th>运营商修改占成</th>   <td><input type="checkbox" {+if $config.editzc==1+}checked{+/if+} class="editzc" /></td> 
+  <th>运营商删除用户</th><td><input type="checkbox" {+if $config.deluser==1+}checked{+/if+} class="deluser" /></td>
+ </tr>
+ <tr>
+  <th>自动降倍双面联动</th>   <td><input type="checkbox" {+if $config.autold==1+}checked{+/if+} class="autold" /> *如:降双同时降单</td> <th>自动识别手机/PC</th><td><input type="checkbox" {+if $config.loginfenli==1+}checked{+/if+}  class="loginfenli" /></td>
+   
+ </tr>
+ <tr><th>自动降倍赔率还原</th><td><select class="plresetfs">
+   <OPTION value="now" {+if $config.plresetfs=='now'+}selected{+/if+}>开出即还原</OPTION>
+   <OPTION value="next" {+if $config.plresetfs=='next'+}selected{+/if+}>停留一期还原</OPTION>
+   </select></td>
+   <th>占成模式</th>
+   <td>
+<select class="zcmode">
+   <OPTION value="0" {+if $config.zcmode==0+}selected{+/if+}>默认</OPTION>
+   <OPTION value="1" {+if $config.zcmode==1+}selected{+/if+}>按彩种</OPTION>   
+   </select>
+   </td>
+  </tr>
+  <tr> 
+   <th>赔率差设置</th>
+   <td>
+<select class="plc">
+   <OPTION value="0" {+if $config.plc==0+}selected{+/if+}>关闭</OPTION>
+   <OPTION value="1" {+if $config.plc==1+}selected{+/if+}>开启</OPTION>  
+   </select> 
+   </td>
+    <th>单注最小</th>
+    <td><input type="text" class='minje txt1' value='{+$config.minje+}' ></td>
+  </tr>
+ <tr>      
+
+
+ </table>
+      <div class="control">
+          <input type="button" value="保存" class="button editall" />
+		</div>
+</div>
+<div id='test'></div>
+</body>
+</html>

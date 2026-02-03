@@ -1,0 +1,79 @@
+{+include file='header2.html'+}
+<style type="text/css">
+.data_table .flag{width:70px;}
+.data_table td{height:30px;}
+.pantb td{text-align:center}
+input.s1{padding:1.5px;}
+</style>
+</head>
+<body id="topbody">
+<script id=myjs language="javascript">var mulu='{+$mulu+}';
+var js=1;var sss='peilvr';
+</script>
+
+<div class="main">
+	<div class="top_info">
+		<span class="title">操盘记录</span><span class="right"></span>
+	</div>
+		<div class="contents param_panel">
+			<div class="game_class">
+				<ul>
+{+if $config.fasttype==1+}
+<li><span>快开彩</span>
+{+section name=i loop=$game+}
+    {+if $game[i].fast==1+}<a href="javascript:void(0)" class="g{+$game[i].gid+}"  gid='{+$game[i].gid+}'>{+$game[i].gname+}</a>{+/if+}
+ {+/section+}
+</li>
+{+/if+}
+{+if $config.slowtype==1+}
+<li><span>低频彩</span>
+{+section name=i loop=$game+}
+    {+if $game[i].fast==0+}<a href="javascript:void(0)" class="g{+$game[i].gid+}" gid='{+$game[i].gid+}'>{+$game[i].gname+}</a>{+/if+}
+ {+/section+}
+</li>
+{+/if+}
+				</ul>
+			</div>
+            
+ <table class="list data_table nrtb">
+
+<thead>
+  <TR>
+  <th>
+{+$game[i].gname+}
+    </th>
+    <th>类别</th>
+     <th>赔率值</th>
+   <th>备注</th>
+   <th>时间</th>
+   <th>操作员</th>
+  
+  </TR>
+  </thead>
+  {+section name=i loop=$p+}
+  <TR>
+   <td>{+$p[i].gname+}</td>
+   <td>{+$p[i].pid+}</td>
+   <td>{+$p[i].peilv+}</td>
+   <td>{+$p[i].auto+}</td>
+   <td>{+$p[i].time+}</td>
+   <td>{+$p[i].sonuser+}</td>
+  </TR>
+  {+/section+}
+ </table>
+ <div class="page"><div class="page_info"  page='{+$page+}' pcount='{+$pcount+}'>
+<span class="record">共 <span>{+$rcount+}</span> 条记录</span>
+<span class="page_count">共 <span>{+$pcount+}</span> 页</span>
+<span class="page_control">
+
+</span>
+</div>
+</div>
+ </div>
+</div>
+<div id='test'></div>
+<script language="javascript">
+var gid={+$gid+};
+</script>
+</body>
+</html>

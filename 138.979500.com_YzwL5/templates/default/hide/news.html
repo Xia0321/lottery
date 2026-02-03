@@ -1,0 +1,121 @@
+{+include file='header2.html'+}
+<style type="text/css">
+.conwidth{width:400px;padding-left:10px;text-align:left;}
+</style>
+</head>
+<body>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='news';</script>
+<div class="main">
+	<div class="top_info">
+		<span class="title">消息发布</span><span class="right"></span>
+	</div>
+	<form method="POST" style="margin:0">
+		<input type="hidden" value="addnews" name="xtype">
+		<table class="data_table data_list list news_tb">
+		<tr>
+        <td colspan="2">发布公司:
+        <select name=wid>
+        <OPTION value="0">所有公司</OPTION>
+        {+section name=k loop=$web+}
+        <OPTION value="{+$web[k].wid+}">{+$web[k].webname+}</OPTION>
+        {+/section+}
+        </select>
+        </td><td colspan="6">参数:{期数}、{公司名称}、{开盘时间}、{关盘时间}、{开奖时间}</td>
+		  <td colspan="1"><textarea cols="50" rows="5" id=content name="content"></textarea></td>
+          
+          <td colspan="2">
+				<input type="submit" value="发布" class="button">
+			</td>
+            
+		</tr>
+		<thead>
+		<tr>
+			<th>
+				<input type="checkbox" id="clickall">全选
+			</th>
+			<th>
+				序号
+			</th>
+            <th>
+				公司
+			</th>
+           <th>
+				包含参数
+			</th>
+			<th>
+				显示
+			</th>
+			<th>
+				发布对象
+			</th>
+			<th>
+				滚动
+			</th>
+			<th>
+				弹出
+			</th>
+			<th class="conwidth">
+				内容
+			</th>
+			<th>
+				时间
+			</th>
+			<th>
+				<input type="button" class="btn3 btnf dels" id="delall" value="删除选中">
+			</th>
+		</tr>
+        </thead>
+         {+section name=i loop=$news+}
+		<tr>
+			<td>
+				<input class='chk' type="checkbox" value='{+$news[i].id+}' />
+			</td>
+			<td>
+				{+$news[i].id+}
+			</td>
+            <td>
+               <select class=wid>
+                <OPTION {+if $news[i].wid==0+}selected{+/if+} value="0">所有公司</OPTION>
+        {+section name=k loop=$web+}
+        <OPTION {+if $web[k].wid==$news[i].wid+}selected{+/if+} value="{+$web[k].wid+}">{+$web[k].webname+}</OPTION>
+        {+/section+}
+        </select>
+            </td>
+           <td>
+				<input type="checkbox" class="cs" value='1' {+if $news[i].cs==1+}checked{+/if+} />
+			</td> 
+			<td>
+				<input type="checkbox" class="ifok" value='1' {+if $news[i].ifok==1+}checked{+/if+} />
+			</td>
+			<td>
+			  <SELECT class="agent">
+                <OPTION value="2" {+if $news[i].agent==2+}selected{+/if+}>全部</OPTION>
+                <OPTION value="1" {+if $news[i].agent==1+}selected{+/if+}>代理</OPTION>
+                <OPTION value="0" {+if $news[i].agent==0+}selected{+/if+}>会员</OPTION>
+              </SELECT>
+            
+			
+            </td>
+			<td>
+				<input type="checkbox" class="gundong" value='1' {+if $news[i].gundong==1+}checked{+/if+} />
+			</td>
+			<td>
+				<input type="checkbox" class="alert" value='1' {+if $news[i].alert==1+}checked{+/if+} />
+			</td>
+			<td class="conwidth" style="text-align:left">
+				<textarea cols="50" class="con" rows="6">{+$news[i].content+}</textarea>
+			</td>
+			<td>
+				<input type="text" class="time" value='{+$news[i].time+}' />
+			</td>
+			<td>
+				<input type="button" class="edit btn1 btnf" value="修改">&nbsp;&nbsp;<input type="button" class="dels btn1 btnf" value="删除">
+			</td>
+		</tr>
+{+/section+}
+		</table>
+	</form>
+</div>
+<div id="test">
+</body>
+</html>

@@ -1,0 +1,43 @@
+{+include file='header2.html'+}
+<style>
+.addtb{width:200px;display:none;position:absolute;background:#fff}
+.addtb td{text-align:left;}
+.s_tb .name{width:50px;}
+.v {text-align:left;padding-left:5px;}
+.v input{width:300px;}
+.px{width:50px;}
+tr:hover{background:#deedfe}
+</style>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='gameset';</script>
+</head>
+<body>
+<div class="main">
+	<div class="top_info">
+		<span class="title">彩种开放设置</span><span class="right"></span>
+	</div>
+ <table class="data_table s_tb" style="width: 1000px;">
+ 
+<thead>
+ <TR>
+ <th  style='width:20%' >彩种</th><th  style='width:20%' >gid</th><th  style='width:20%' >总开关</th><th  style='width:20%' >开放</th><th  style='width:20%' >排序</th>
+ </TR></thead>	 
+ {+section name=i loop=$game+}
+   <TR>
+       <th><label>{+$game[i].gname+}</label></th>
+       <td><label>{+$game[i].gid+}</label></td>
+       <td class='v'><INPUT type='checkbox'  class="ifopen"   value="{+$game[i].gid+}" {+if $game[i].ifopen==1+}checked{+/if+} /></td>
+       <td class='v'><INPUT type='checkbox'  class="ifok"   value="{+$game[i].gid+}" {+if $game[i].ifok==1+}checked{+/if+} /></td>
+       <td><INPUT type='text'  class="px"   value="{+$game[i].xsort+}"  /></td>
+   </TR>
+ {+/section+}
+  </table>
+  
+		<div class="control" style="width: 1000px;">
+			<input type="button" value="保存" class="button send">
+		</div>
+</div>
+
+<div id='test'></div>
+
+</body>
+</html>

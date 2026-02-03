@@ -1,0 +1,283 @@
+{+include file='header2.html'+}
+<style>
+td, th {
+	height:30px;
+	line-height:30px;
+}
+.edittb {
+	position:absolute;
+	width:950px;
+	display:none;
+	background:#fff;
+}
+.edittb th {
+	width:150px;
+	text-align:right;
+	padding-right:5px;
+}
+.edittb td {
+	text-align:left
+}
+.h {
+	display:none
+}
+.edittb .txt1 {
+	width:180px;
+}
+.edittb .txt2 {
+	width:80px;
+}
+label {
+	color:#D50000
+}
+img{cursor:pointer}
+
+.stb .f{width:20%}
+.stb .s{width:40%}
+.stb .t{width:40%}
+
+
+
+</style>
+</head><body>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='game';</script>
+<script language="javascript">
+var g=new Array();
+</script>
+<div class="main">
+<div class="top_info">
+    <span class="title">游戏配置</span><span class="right"></span>
+</div>
+ <table class="data_table list data_list ztb">
+ <thead>
+  <tr>
+   <th>ID</th>
+   <th>名称</th>
+   <th>简称</th>
+   <th>自动开关盘</th>
+   <th>盘状态</th>
+   <th class="h">正码<BR />状态</th>
+   <th>快开</th>
+   <th>当前期</th>
+   <th class="h">年柱</th>
+   <th>号码数</th>
+   <th class="h">特码</th>
+   <th>报表开关</th>
+   <th class="h">正码提<BR />前关盘</th>
+   <th>会员提前关盘</th>
+   <th>开放</th>
+   <th>非官方</th>
+   <th class="h">样式</th>
+   <th>分类</th>
+   <th>分类名</th>
+   <th>排序</th>
+   
+   <th>操作
+    <input type="button" value="添加" class="add btn1 btnf hide" /></th>
+  </tr>
+  </thead>
+  {+section name=i loop=$game+}
+  <tr>
+   <td class="gid">{+$game[i].gid+}</td>
+   <td class="gname">{+$game[i].gname+}</td>
+   <td class="sgname">{+$game[i].sgname+}</td>
+   <td class="autoopenpan"><img src='{+$globalpath+}img/{+$game[i].autoopenpan+}.gif'  class="autoopenpan" /></td>
+   <td class="panstatus"><img src='{+$globalpath+}img/{+$game[i].panstatus+}.gif'  class="panstatus" /></td>
+   <td class="otherstatus h"><img src='{+$globalpath+}img/{+$game[i].otherstatus+}.gif'  class="otherstatus" /></td>
+   <td class="fast"><img src='{+$globalpath+}img/{+$game[i].fast+}.gif'  class="fast" /></td>
+   <td class="thisqishu">{+$game[i].thisqishu+}</td>
+   <td class="thisbml h" >{+$game[i].thisbml+}</td>
+   <td class="mnum">{+$game[i].mnum+}</td>
+   <td class="havetm h"><img src='{+$globalpath+}img/{+$game[i].havetm+}.gif'  class="havetm" /></td>
+   <td class="baostatus"><img src='{+$globalpath+}img/{+$game[i].baostatus+}.gif' class="baostatus" /></td>
+   <td class="otherclosetime h">{+$game[i].otherclosetime+}</td>
+   <td class="userclosetime">{+$game[i].userclosetime+}</td>
+<td class="ifopen"><img src='{+$globalpath+}img/{+$game[i].ifopen+}.gif' class="ifopen" /></td>
+<td class="guanfang"><img src='{+$globalpath+}img/{+$game[i].guanfang+}.gif' class="guanfang" /></td>
+<td class="class h">{+$game[i].class+}</td>
+<td class="fenlei">{+$game[i].fenlei+}</td>
+<td class="flname">{+$game[i].flname+}</td>
+<td class="xsort">{+$game[i].xsort+}</td>
+<td class="url h">{+$game[i].url+}</td>
+<td class="kjurl h">{+$game[i].kjurl+}</td>
+
+   <td class="patt h">{+$game[i].patt+}</td>
+   <td><input type="button" value="修改" class="edit btn1 btnf" />
+    <input type="button" value="删除" class="dels btn1 btnf hide" /></td>
+<TD class="h">
+<script language="javascript">
+g[{+$game[i].i+}] = new Array();
+g[{+$game[i].i+}]['gid'] = '{+$game[i].gid+}';
+g[{+$game[i].i+}]['cs'] = new Array();
+{+foreach from=$game[i].cs key=key item=j +}
+g[{+$game[i].i+}]['cs']['{+$key+}'] = '{+$j+}';
+{+/foreach+}
+{+if $game[i].ftype!=null+}
+g[{+$game[i].i+}]['ftype'] = new Array();
+{+section name=j loop=$game[i].ftype   start=0 step=1+}
+g[{+$game[i].i+}]['ftype'][{+$smarty.section.j.index+}] = new Array();
+g[{+$game[i].i+}]['ftype'][{+$smarty.section.j.index+}]['class'] = '{+$game[i].ftype[j].class+}';
+g[{+$game[i].i+}]['ftype'][{+$smarty.section.j.index+}]['name'] = '{+$game[i].ftype[j].name+}';
+g[{+$game[i].i+}]['ftype'][{+$smarty.section.j.index+}]['bc'] = '{+$game[i].ftype[j].bc+}';
+{+/section+}
+{+/if+}
+
+g[{+$game[i].i+}]['ztype'] = new Array();
+{+foreach from=$game[i].ztype key=key item=j +}
+g[{+$game[i].i+}]['ztype']['{+$key+}'] = '{+$j+}';
+{+/foreach+}
+g[{+$game[i].i+}]['mtype'] = new Array();
+{+foreach from=$game[i].mtype key=key item=j +}
+g[{+$game[i].i+}]['mtype']['{+$key+}'] = '{+$j+}';
+{+/foreach+}
+g[{+$game[i].i+}]['dftype'] = new Array();
+{+foreach from=$game[i].dftype key=key item=j +}
+g[{+$game[i].i+}]['dftype']['{+$key+}'] = '{+$j+}';
+{+/foreach+}
+
+
+{+if $game[i].pan!=null+}
+g[{+$game[i].i+}]['pan'] = new Array();
+{+section name=j loop=$game[i].pan   start=0 step=1+}
+g[{+$game[i].i+}]['pan'][{+$smarty.section.j.index+}] = new Array();
+g[{+$game[i].i+}]['pan'][{+$smarty.section.j.index+}]['class'] = '{+$game[i].pan[j].class+}';
+g[{+$game[i].i+}]['pan'][{+$smarty.section.j.index+}]['name'] = '{+$game[i].pan[j].name+}';
+g[{+$game[i].i+}]['pan'][{+$smarty.section.j.index+}]['abcd'] = '{+$game[i].pan[j].abcd+}';
+g[{+$game[i].i+}]['pan'][{+$smarty.section.j.index+}]['ab'] = '{+$game[i].pan[j].ab+}';
+g[{+$game[i].i+}]['pan'][{+$smarty.section.j.index+}]['bc'] = '{+$game[i].pan[j].bc+}';
+g[{+$game[i].i+}]['pan'][{+$smarty.section.j.index+}]['ifok'] = '{+$game[i].pan[j].ifok+}';
+{+/section+}
+{+/if+}
+</script>
+</TD>
+  </tr>
+  {+/section+}
+  </tr>
+  
+ </table>
+</div>
+<table class="data_table list edittb">
+ <tr>
+  <th colspan="2" style="text-align:center"><input type="button" value="提交" class="editnext btn1 btnf" />
+   &nbsp;&nbsp;&nbsp;
+   <input type="button" value="关闭" class="close btn1 btnf" /></th>
+ </tr>
+ <tr>
+  <th>游戏ID</th>
+  <td><label class="gid"></label></td>
+ </tr>
+ <tr>
+  <th>游戏名称</th>
+  <td><input type="text" class="gname txt1" /></td>
+ </tr>
+ <tr>
+  <th>游戏简称</th>
+  <td><input type="text" class="sgname txt1" /></td>
+ </tr>
+  <tr>
+  <th>自动开关盘</th>
+  <td><select class="autoopenpan"><option value="0">否</option><option value="1">是</option></select></td>
+ </tr>
+  <tr>
+  <th>盘状态</th>
+  <td><select class="panstatus"><option value="0">关盘</option><option value="1">开盘</option></select></td>
+ </tr>
+ 
+   <th>盘状态[正码]</th>
+  <td><select class="otherstatus"><option value="0">关盘</option><option value="1">开盘</option></select></td>
+ </tr>
+ <tr>
+  <th>快开</th>
+  <td><select class="fast"><option value="0">不是</option><option value="1">是</option></select></td>
+ </tr>
+ <tr>
+  <th>当前期数</th>
+  <td><input type="text" class="thisqishu txt1" /></td>
+ </tr>
+ <tr>
+  <th>当前年柱</th>
+  <td><input type="text" class="thisbml txt1" /></td>
+ </tr>
+ <tr>
+  <th>开奖号码个数</th>
+  <td><input type="text" class="mnum txt1" /></td>
+ </tr>
+ <tr>
+  <th>样式</th>
+  <td><input type="text" class="class txt1" /></td>
+ </tr>
+  <tr>
+  <th>分类</th>
+  <td><input type="text" class="fenlei txt1" /></td>
+ </tr>
+  <tr>
+  <th>分类名称</th>
+  <td><input type="text" class="flname txt1" /></td>
+ </tr>
+ <tr>
+  <th>排序</th>
+  <td><input type="text" class="xsort txt1" /></td>
+ </tr>
+  <tr>
+  <th>官网</th>
+  <td><input type="text" class="url" /></td>
+ </tr>
+  <tr>
+  <th>开奖直播</th>
+  <td><input type="text" class="kjurl" /></td>
+ </tr>
+ <tr>
+  <th>是否有特码</th>
+  <td><select class="havetm"><option value="0">无</option><option value="1">有</option></select></td>
+ </tr>
+ <tr>
+  <th>报表开关</th>
+   <td><select class="baostatus"><option value="0">关</option><option value="1">开</option></select></td>
+ </tr>
+ <tr>
+  <th>正选号提前关盘时间</th>
+  <td><input type="text" class="otherclosetime txt1" />秒</td>
+ </tr>
+ <tr>
+  <th>会员提前关盘时间</th>
+  <td><input type="text" class="userclosetime txt1" />秒</td>
+ </tr>
+ <tr>
+  <th>是否开放</th>
+  <td><select class="ifopen"><option value="0">关</option><option value="1">开</option></select></td>
+ </tr>
+ <tr>
+  <th>一般游戏参数</th>
+  <td class="cs">
+       
+  </td>
+ </tr>
+ <tr>
+  <th>大面类型</th>
+  <td class="dftype">
+    
+     </td>
+ </tr>
+ <tr>
+  <th>面类型</th>
+  <td class="ftype">
+    
+     </td>
+ </tr>
+ <tr>
+  <th>码类型</th>
+  <td class="mtype"></td>
+ </tr>
+ <tr>
+  <th>中奖类型</th>
+  <td class="ztype"></td>
+ </tr>
+ <tr>
+  <th>ABCD盘参数</th>
+  <td class="pan"></td>
+ </tr>
+ 
+</table>
+<div id='test'></div>
+</body>
+</html>

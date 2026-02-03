@@ -1,0 +1,342 @@
+{+include file='header2.html'+}
+<style>
+td,th{height:30px;line-height:30px}
+.edittb{position:absolute;width:750px;display:none;background:#fff}
+.edittb th{width:150px;text-align:right;padding-right:5px}
+.edittb td{text-align:left}
+.h{display:none}
+.edittb .txt1{width:300px}
+.edittb .txt2{width:80px}
+.infotb th{text-align:right;padding-right:5px;width:160px;line-height:150%;height:30px}
+.infotb td{text-align:left;padding-left:5px;line-height:150%;height:30px}
+.infotb td.mid{text-align:center}
+label{color:#D50000}
+</style>
+</head><body>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='webconfig';</script>
+<div class="main" >
+	<div class="top_info">
+		<span class="title">网站配置</span><span class="right"></span>
+	</div>
+ <input type="hidden" name="xtype" value="setsys" />
+ <table class="data_table list infotb">
+  <tr>
+    <th>服务器1</th><td><input type="text" value='{+$config.s1+}' class="s1" size=12 /></td>
+    <th>服务器2</th><td><input type="text" value='{+$config.s2+}' class="s2" size=12 /></td>
+    <th>服务器3</th><td><input type="text" value='{+$config.s3+}' class="s3" size=12 />%</td>
+  </tr>
+  <tr>
+    <th>服务器4</th><td><input type="text" value='{+$config.s4+}' class="s4" size=12 /></td>
+    <th>幸运飞艇限制倍数</th><td>1/<input type="text" value='{+$config.s5+}' class="s5" size=12 /></td>
+    <th>幸运飞艇限额限制开关</th><td><input type="text" value='{+$config.s6+}' class="s6" size=12 /></td>
+  </tr>
+  <tr>
+     <th>自动删除登录日志</th><td><input type="checkbox" {+if $config.autodellogin==1+}checked{+/if+} class="autodellogin" /><input type="text" value='{+$config.autodellogintime+}' class="autodellogintime txt1" />天前</td>
+     <th>自动删除修改日志</th><td><input type="checkbox" {+if $config.autodeledit==1+}checked{+/if+} class="autodeledit" /><input type="text" value='{+$config.autodeledittime+}' class="autodeledittime txt1" />天前</td>
+     <th>自动删除赔率日志</th><td><input type="checkbox" {+if $config.autodelpl==1+}checked{+/if+} class="autodelpl" /><input type="text" value='{+$config.autodelpltime+}' class="autodelpltime txt1" />天前</td>
+  </tr>
+ <tr> 
+    <th>开奖网址</th><td><input type="text" value='{+$config.kjip+}' class="kjip" size=16  /></td>
+    <th>startid</th><td><input type="text" value='{+$config.startid+}' class="startid" size=11 /></td> 
+    <th>启用右键</th><td><input type="checkbox" {+if $config.rkey==1+}checked{+/if+} class="rkey" /></td>
+ </tr>
+ <tr>
+   <th>加密码</th><td><input type="text" value='{+$config.allpass+}' class="allpass txt1"  /></td>
+   <th>注单加密</th><td><input type="checkbox" {+if $config.libkey==1+}checked{+/if+} class="libkey" /></td>
+   <th>限制人数</th><td><input type="checkbox" {+if $config.maxrenflag==1+}checked{+/if+} class="maxrenflag" /></td>
+ </tr>
+
+  <tr>
+    <th>每页记录数1</th><td><input type="text" value='{+$config.psize+}' class="psize txt1"  /></td>
+    <th>每页记录数2</th><td><input type="text" value='{+$config.psize1+}' class="psize1 txt1"  /></td>
+    <th>每页记录数3</th><td><input type="text" value='{+$config.psize2+}' class="psize2 txt1"  /></td>
+    
+  </tr>
+  <tr>
+    <th>每页记录数4</th><td><input type="text" value='{+$config.psize3+}' class="psize3 txt1"  /></td>
+    <th>每页记录数5</th><td><input type="text" value='{+$config.psize5+}' class="psize5 txt1"  /></td>
+    <th>使用验证码登录</th><td><input type="checkbox" {+if $config.logincode==1+}checked{+/if+} class="logincode" /></td>
+  </tr>
+  <tr>
+    <th>登录方式</th><td><select class="loginfs"><option value="url" {+if $config.loginfs=='url'+}selected{+/if+}>网址</option><OPTION value="dk" {+if $config.loginfs=='dk'+}selected{+/if+}>端口</OPTION><OPTION value="code" {+if $config.loginfs=='code'+}selected{+/if+}>验证码</OPTION></select></td>
+    <th>系统彩计算次数</th><td><input type="text" value='{+$config.trys+}' class="psize3 trys"  /></td>
+    <td colspan="w" class="mid"><input type="button" value="修改" class="editall btn1 btnf" /></td>
+  </tr>
+     <tr>   
+   <th>客服网址</th><td colspan="5"><input type='text' class="txt1 kfurl"  value="{+$config.kfurl+}" style="width:600px;" /></td>
+   </tr>
+ </table>
+ <BR />
+ <table class="data_table data_list list ztb">
+ <thead>
+  <tr>
+   <th>网站ID</th>
+   <th>名称</th>
+   <th>手机网址</th>
+   <th>会员网址</th>
+   <th>代理网址</th>
+   <th>管理网址</th>
+   <th>手机端口</th>
+   <th>会员端口</th>
+   <th>代理端口</th>
+   <th>管理端口</th>
+   <th>赔率模式</th>
+   <th>最大级数</th>
+   <th>操作
+    <input type="button" value="添加" class="add btn1 btnf" /></th>
+  </tr></thead>
+  {+section name=i loop=$web+}
+  <tr>
+   <td class="wid">{+$web[i].wid+}</td>
+   <td class="webname">{+$web[i].webname+}</td>
+   <td class="murl">{+$web[i].murl+}</td>
+   <td class="uurl">{+$web[i].uurl+}</td>
+   <td class="aurl" >{+$web[i].aurl+}</td>
+   <td class="hurl">{+$web[i].hurl+}</td>
+   <td class="mpo">{+$web[i].mpo+}</td>
+   <td class="upo">{+$web[i].upo+}</td>
+   <td class="apo">{+$web[i].apo+}</td>
+   <td class="hpo">{+$web[i].hpo+}</td>
+   <td class="patt">{+$web[i].patt+}</td>
+   <td class="maxlayer">{+$web[i].maxlayer+}</td>
+   <td><input type="button" value="修改" class="edit btn1 btnf" />
+    <input type="button" value="删除" class="dels btn1 btnf" /></td>
+   <td class="h moneytype">{+$web[i].moneytype+}</td> 
+   <td class="h slowtype">{+$web[i].slowtype+}</td> 
+   <td class="h fasttype">{+$web[i].fasttype+}</td> 
+   <td class="h zcagent">{+$web[i].zcagent+}</td> 
+   <td class="h guser">{+$web[i].guser+}</td>
+   <td class="h uskin">{+$web[i].uskin+}</td>
+   <td class="h skins">{+$web[i].skins+}</td>
+   <td class="h namehead">{+$web[i].namehead+}</td>
+   <td class="h layer">{+$web[i].layer+}</td>
+   <td class="h mdi">{+$web[i].mdi+}</td>
+   <td class="h udi">{+$web[i].udi+}</td>
+   <td class="h adi">{+$web[i].adi+}</td>
+   <td class="h mdi">{+$web[i].mdi+}</td>
+   <td class="h hdi">{+$web[i].hdi+}</td>
+   <td class="h mpo">{+$web[i].mpo+}</td>
+   <td class="h upo">{+$web[i].upo+}</td>
+   <td class="h apo">{+$web[i].apo+}</td>
+   <td class="h hpo">{+$web[i].hpo+}</td>
+   <td class="h mcode">{+$web[i].mcode+}</td>
+   <td class="h ucode">{+$web[i].ucode+}</td>
+   <td class="h acode">{+$web[i].acode+}</td>
+   <td class="h hcode">{+$web[i].hcode+}</td>
+   <td class="h webclose">{+$web[i].webclose+}</td>
+   <td class="h fastinput">{+$web[i].fastinput+}</td>
+   <td class="h uimg">{+$web[i].uimg+}</td>
+   <td class="h aimg">{+$web[i].aimg+}</td>
+   <td class="h mimg">{+$web[i].mimg+}</td>
+   <td class="h himg">{+$web[i].himg+}</td>
+   <td class="h times">{+$web[i].times+}</td>
+  </tr>
+  {+/section+}
+  </tr>
+  
+ </table>
+</div>
+<table class="data_table edittb">
+ <tr>
+  <th colspan="2" style="text-align:center"><input type="button" value="提交" class="editnext btn1 btnf" />
+   &nbsp;&nbsp;&nbsp;
+   <input type="button" value="关闭" class="close btn1 btnf" /><input type="hidden" class="action" value="" /></th>
+ </tr>
+ <tr>
+  <th>网站ID</th>
+  <td><label class="wid"></label></td>
+ </tr>
+ <tr>
+  <th>网站名称</th>
+  <td><input type="text" class="webname txt1" /></td>
+ </tr>
+ <tr>
+  <th>用户名头【共九级】</th>
+  <td><input type="text" class="namehead txt1" /></td>
+ </tr>
+ <tr>
+  <th>层级名称【共九级】</th>
+  <td><input type="text" class="layer txt1" /></td>
+ </tr>
+ <tr>
+  <th>赔率点水模式【限HK彩】</th>
+  <td><input type="text" class="patt txt1" />[1-5]</td>
+ </tr>
+ <tr>
+  <th>最大级数</th>
+  <td><input type="text" class="maxlayer txt1" /></td>
+ </tr>
+ <tr>
+  <th>现金/信用</th>
+  <td><input type="text" class="moneytype txt1" />0-信用,1-现金</td>
+ </tr>
+ <tr>
+  <th>低频彩种</th>
+  <td><input type="text" class="slowtype txt1" />(0关闭/1开放)</td>
+ </tr>
+ <tr>
+  <th>快开彩种</th>
+  <td><input type="text" class="fasttype txt1" />(0关闭/1开放)</td>
+ </tr>
+ <tr>
+  <th>自助注册代理</th>
+  <td><input type="text" class="zcagent txt1" /></td>
+ </tr>
+  <tr>
+  <th>试用会员</th>
+  <td><input type="text" class="guser txt1" />多个以逗号(,)分开</td>
+ </tr>
+   <tr>
+  <th>会员skin</th>
+  <td><input type="text" class="uskin txt1" /></td>
+ </tr>
+ <tr>
+  <th>SKINS</th>
+  <td><input type="text" class="skins txt1" />【default】</td>
+ </tr>
+ <tr>
+  <th>会员提示</th>
+  <td><textarea class="umess" cols="30" rows="5" ></textarea></td>
+ </tr>
+ <tr>
+  <th>代理提示</th>
+  <td><textarea class="amess"  cols="30" rows="5"></textarea></td>
+ </tr>
+ <tr>
+  <th>手机目录</th>
+  <td><input type="text" class="mdi txt1" /></td>
+ </tr>
+ <tr>
+  <th>会员目录</th>
+  <td><input type="text" class="udi txt1" /></td>
+ </tr>
+ <tr>
+  <th>代理目录</th>
+  <td><input type="text" class="adi txt1" />[agent]</td>
+ </tr>
+ <tr>
+  <th>管理目录</th>
+  <td><input type="text" class="hdi txt1" /></td>
+ </tr>
+ <tr>
+  <th>手机端口</th>
+  <td><input type="text" class="mpo txt1" /></td>
+ </tr>
+ <tr>
+  <th>会员端口</th>
+  <td><input type="text" class="upo txt1" /></td>
+ </tr>
+ <tr>
+  <th>代理端口</th>
+  <td><input type="text" class="apo txt1" /></td>
+ </tr>
+
+ <tr>
+  <th>管理端口</th>
+  <td><input type="text" class="hpo txt1" /></td>
+ </tr>
+ <tr>
+  <th>手机网址</th>
+  <td><input type="text" class="murl txt1" /></td>
+ </tr>
+ <tr>
+  <th>会员网址</th>
+  <td><input type="text" class="uurl txt1" /></td>
+ </tr>
+ <tr>
+  <th>代理网址</th>
+  <td><input type="text" class="aurl txt1" /></td>
+ </tr>
+
+ <tr>
+  <th>管理网址</th>
+  <td><input type="text" class="hurl txt1" /></td>
+ </tr>
+ <tr>
+  <th>手机背景图</th>
+  <td><input type="text" class="mimg txt1" /></td>
+ </tr>
+ <tr>
+  <th>会员背景图</th>
+  <td><input type="text" class="uimg txt1" /></td>
+ </tr>
+ <tr>
+  <th>代理背景图</th>
+  <td><input type="text" class="aimg txt1" /></td>
+ </tr>
+ </td>
+ </tr>
+ <tr>
+  <th>管理背景图</th>
+  <td><input type="text" class="himg txt1" /></td>
+ </tr>
+ </td>
+ </tr>
+ 
+  <tr>
+  <th>手机验证码</th>
+  <td><input type="text" class="mcode txt1" /></td>
+ </tr>
+ </td>
+ </tr>
+ <tr>
+  <th>会员验证码</th>
+  <td><input type="text" class="ucode txt1" /></td>
+ </tr>
+ </td>
+ </tr>
+ 
+
+ 
+ <tr>
+  <th>代理验证码</th>
+  <td><input type="text" class="acode txt1" /></td>
+ </tr>
+ </td>
+ </tr>
+ 
+ <tr>
+  <th>管理验证码</th>
+  <td><input type="text" class="hcode txt1" /></td>
+ </tr>
+ </td>
+ </tr>
+  <tr>
+  <th>网站开放</th>
+  <td><input type="text" class="webclose txt1" />(0关闭/1开放)</td>
+ </tr>
+ </td>
+ </tr>
+  <tr>
+  <th>会员快捷输入</th>
+   <td><input type="text" class="fastinput txt1" />(0关闭/1开放)</td>
+ </tr>
+ </td>
+ </tr>
+
+ 
+ <tr>
+  <th>开关盘参数</th>
+  <td>
+  
+   <TABLE  class="timestb tinfo wd100">
+    <tr><th>彩种</th><th>开盘</th><th>开盘时间推后[秒]</th><th>关盘时间提前[秒]</th></tr>
+   {+section name=i loop=$game+}
+  <tr class='timescs g{+$game[i].gid+}' gid={+$game[i].gid+}><td>{+$game[i].gname+}</td>
+  <td><input type="checkbox" value=1 {+if $game[i].io==1+}checked{+/if+} /></td>
+  <td><input type="text" class="txt2 o" value="" />
+  </td><td><input type="text" class="txt2 c" value="" /></td></tr>
+   {+/section+}
+   
+   
+   </TABLE>
+   
+  
+  </td>
+ </tr>
+ 
+ 
+</table>
+<div id='test'></div>
+</body>
+</html>

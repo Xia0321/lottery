@@ -1,0 +1,102 @@
+{+include file='header2.html'+}
+<style type="text/css">
+	tr:hover{background:#deedfe}
+	</style>
+</head>
+<body id="topbody">
+<script id=myjs language="javascript">var mulu='{+$mulu+}';
+var js=0;var sss='twoyan';
+</script>
+<style>
+#divLargerImage
+{
+    display: none;
+    width: 200px;
+    height: 200px;
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin: auto;
+    z-index: 99;
+}
+
+#divOverlay
+{
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: #CCC;
+    opacity: 0.6;
+    width: 100%;
+    height: 100%;
+    z-index: 98;
+}
+</style>
+
+	<div class="main">
+		<div class="top_info">
+		<span class="title">二次验证</span>
+		</div>
+		<div class="contents">
+		<table class="data_table info_table user_panel" style="width:50%;margin: 0 auto;">
+			<thead><tr><th colspan="2">个人二次验证</th></tr></thead>
+      		<input name="id" type="hidden" value="hlc008-zy9" />
+      		<input name="passname" type="hidden" value="zy9" />
+      		<input name="secretkey" type="hidden" value="BRHV7E7X2YJKVMEP" />
+			<tbody>				
+                <tr>
+                    <th>用途</th>
+                    <td>
+                        通过二次验证（也称为双重身份验证），您可以为自己的帐号添加一道额外的安全保障。在完成设置后，您将使用以下对象通过两个步骤登录帐号：</br></br>
+                        您的密码</br>
+                        您设备上安装的Google认证器为您生成的二次验证码
+					</td>
+                </tr>
+				<tr>
+					<th>步骤</th>
+					<td>
+						<div style="margin-top: 25px; color:red;font-weight: bold; padding:10px 0;margin: 0 auto;">
+							1.下载安装Google认证器 （Google Authenticator）客户端。<br/>
+							目前客户端有:						
+						   	<a href="#" onClick="showQrLink('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAQAAAACFI5MzAAABcUlEQVR42u2Xy43DMAxEKeSgo0pQJ3ZjBmLAjSWdqIQcdTDEHVL7s4McM8YuLMBG5HcZkMNPRF8dOclJ/gApInJRCY+r1lFn3BKb4FlUb2kpsSX8anRSBXcJFpO7LkWGQ0ipQbu248ggV2TqGOL5kfFx+cxUoxPzKLS5wPTkXgLpJzZEB0Z9ruD3kxL1IRlZmbMZFVc2URlkytYkMgKzSg10AjFzjre05ti2cSORos20BWDc1swnWoPlZ8QLDgH+rhIWKeiRyMqA8qheL8ImGm82s6DN8CTwCpsgOmiUA2RZpoATmRT5GhbqHv3RRiOuDfdVkKlNH2URKDJn4hNUAjc6gTOvfW772PhVwSzi1RlRKuhVXiqJTPzY5jBZv95MDBLpc1sxuKTvLiOd2MZS+txupu1OJ77DomFN1i1F4m6LphGMK6+SXIdjCF7wqMVJd9EhEM9PDb1XYZvdbtEM4h71NhVd6s697yfnv/eT/DfyAY/vd1PWIyp4AAAAAElFTkSuQmCC')" style="color:blue;">android版</a> | 
+						   	<a href="#" onClick="showQrLink('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAADIAQAAAACFI5MzAAABV0lEQVR42u2X4YrEIAyEA3ktIa8eyGsJ3kzsQo/l/jn3y+J2NV9BE8ektfXXZZdccomKpJnPmL7Sp3MgIoWWAxD/VT3WkPSaFukLdw6EJMcYNoI9KaGP08CUZG37CAT1K9bnCEVRn+tLO+fIvirh5baKCMZsAdQ7GCJCmSdjia0LdF1EZs8MKzk3UEQW3IMdD6ATVUtEkIig9RG9dcNCRehc7ZNlXImLSC8CDyBLMPnNEBGk7yeQMCKuS0S4gNZIdIr9tbaTZJeKRa3PwSYii1a663R3vhV/lLT+ujIlZfiK6FmCObGCmBS97YorIRn7vg/wO6JnCY6U8xT7pwqqyKLi8WNOfxKshNRurLNkJSIPhcfeolSRruh8e+yjnBYi0pN3kv2O9VHyzEua9q4Y50lVaxHUXEp2fcqo56ApSMN+a9hfFCJChTxBxRLmCBG535qXXPJv5Afgv60mTJNXEgAAAABJRU5ErkJggg==')" style="color:blue;">iOS版</a><br/>
+						   	2.然后选择“扫描条形码”。
+					   </div>
+					   <div id="divLargerImage"></div>
+					   <div id="divOverlay"></div>
+					</td>
+				</tr>
+				<tr>
+					<th>二维码</th>
+					<td>
+						<div style="margin-top: 25px; color:red;font-weight: bold;text-align: center;">
+						   	 3. 扫描以下二维码，再输入下方二次验证码完成认证。								   	 
+						</div>
+						<div id="qrpanel" style="width: 300px; text-align:center;padding:10px 0;margin: 0 auto;position:relative; ">
+						<div id="qrcode" style="width:200px;height:200px;margin:0 auto;overflow:hidden; text-align: center; border:1px solid #ddd;z-index:1; " title="otpauth://totp/zy9:zy9?secret=BRHV7E7X2YJKVMEP&amp;issuer=zy9"><canvas width="200" height="200" style="display: none;"></canvas><img alt="Scan me!" src="data:image/png;base64,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" style="display: block;"></div>
+						</div>
+					</td>
+				</tr>
+				<tr>
+					<th>二次验证码</th>
+					<td><input type="number" name="faCode" placeholder="未绑定" min="0" maxlength="10" /></td>					
+		      	</tr>
+                <tr>
+					<th></th>
+                    <td>
+                        <div style="margin-top: 25px; color:red;font-weight: bold; padding:10px 0;margin: 0 auto;">
+                            4.二次验证启用后，这时您也可以看到刚添加的二次验证已经出现在Google认证器里了。</br>
+                            之后登录需要输入二次验证码的时候，打开Google认证器，把对应的验证码添到登录页面进行验证就可以了。
+                        </div>
+                    </td>
+                </tr>
+			</tbody>
+		</table>	
+		</div>
+	</div>
+	<div class="data_footer control">
+		<input type="button" value="确定" onclick="saveFaCode()" class="button" />
+	</div>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<?php /* Smarty version 2.6.18, created on 2024-12-23 16:03:38
+         compiled from login.html */ ?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>会员登陆</title>
+<style type="text/css">
+@charset "UTF-8";
+
+body {
+	margin: 0;
+	padding: 0;
+	background: white;
+	color: #333;
+	font: 14px/1.231 Verdana, Arial, Helvetica, sans-serif;
+}
+
+input {
+	border: none;
+	padding: 0;
+}
+
+.header {
+	height: 100px;
+	margin: 0 auto;
+	width: 950px;
+}
+
+.header a {
+	display: block;
+	background: url("../css/login/sgwin-y.png") no-repeat;
+	width: 300px;
+	height: 72px;
+	float: right;
+	margin: 20px 0px 0 0;
+}
+
+.main {
+	background: #b63a42 url("../css/login/bg.png") no-repeat center;
+	height: 475px;
+}
+
+.panel {
+	background: url("../css/login/year_banner.png") no-repeat left;
+	width: 950px;
+	height: 475px;
+	margin: 0 auto;
+}
+
+.login {
+	float: right;
+	width: 270px;
+	height: auto;
+	margin-top: 72px;
+	background: rgba(0,0,0,0.3);
+	border-radius: 10px;
+}
+
+.login .info {
+	background: url("../css/login/input_bg.png") no-repeat left top;
+	height: 50px;
+	width: 220px;
+	margin: 10px auto;
+}
+
+.login .info label {
+	background: url("../css/login/login_ico.png") no-repeat top;
+	display: block;
+	font-size: 0;
+	text-indent: -99999px;
+	height: 35px;
+	width: 38px;
+	margin: 6px 0px 0 10px;
+	float: left;
+}
+
+.login .password label {
+	background-position: center;
+}
+
+.login .code label {
+	background-position: bottom;
+}
+
+.login .facode label {
+	background: url("../css/login/login_ico2.png") no-repeat bottom;
+}
+
+.login .info input {
+	float: left;
+	font-size: 16px;
+	margin: 12px 0 0 0;
+	width: 155px;
+	font-family: Microsoft YaHei;
+}
+
+.login .info .tip {
+	color: #999;
+}
+
+.login .code input {
+	width: 60px;
+}
+
+.login .code img {
+	cursor: pointer;
+	float: right;
+	margin: 9px 15px 0 0;
+}
+
+.login .control input {
+	background: url("../css/login/submit.png");
+	display: block;
+	height: 36px;
+	margin: 15px auto 15px auto;
+	width: 215px;
+	text-indent: -9999em;
+}
+
+.form_t {
+	height: 36px;
+    margin-top: 15px;
+    line-height: 36px;
+    margin-left: 30px;
+}
+
+.form_t span {
+	display: inline-block;
+	width: 110px;
+	height: 36px;
+	line-height: 36px;
+	color: #fff;
+	font-weight: 600;
+}
+
+span.user_t {
+	font-size: 24px;
+}
+
+span.user_f {
+	background: url("../css/login/google_auth_icon.png") top center no-repeat;
+	text-indent: 40px;
+	margin-top: 5px;
+	cursor: pointer;
+}
+
+.fl {
+	float: left;
+}
+
+.fr {
+	float: right;
+}
+
+.login .facode {
+	display: none;
+}
+</style>
+<script language="javascript" src="/js/jquery-1.8.3.js"></script>
+<script language="javascript" src="/js/md5.js"></script>
+<script language="javascript">
+
+$(function(){
+
+	$("#imgcode").click(function(){
+		$(this).attr('src',"../imgcode.php?act=init&"+Math.random());
+	});
+	$("input:password").click(function(){
+	     $(this).attr("placeholder","");
+	});
+	$("#password").blur(function(){
+		 if($(this).val()==''){
+	       $(this).attr("placeholder",$(this).attr("title"));
+		 }else{
+	       $("#pass").val(men_md5_password($("#password").val()));	
+		 }
+	});
+	$("input:text").click(function(){
+	     $(this).attr("placeholder","");
+	});
+	$("input:text").blur(function(){
+		if($(this).val()==''){
+	      $(this).attr("placeholder",$(this).attr("title"));
+		}
+	});
+	$(".user_f").click(function(){
+		 $('.info.facode').slideToggle();
+	});
+	top.document.title="Welcome";
+	$("#username").focus();
+});
+
+function checkform(){
+    if($("#username").val()==''){
+	     alert("請輸入帳號");
+		 $("#username").focus();
+		 return false;
+	}else if($("#password").val()==''){
+	     alert("請輸入密碼");
+		 $("#password").focus();
+		 return false;
+	}else if($("#code").val()==''){
+	     alert("請輸入驗證碼");
+		 $("#code").focus();
+		 return false;
+	}else{
+		return true;
+	}
+}
+
+function stop(){
+   return false;
+}
+
+function hideinfo(){ if(event.srcElement.tagName=="A"){
+   window.status=event.srcElement.innerText}
+}
+document.onmouseover=hideinfo; 
+document.onmousemove=hideinfo;
+
+</script> 
+
+</head>
+
+<body>
+<div class="header"><!--<a href="#" target="_blank"></a>--></div>
+<div class="main">
+<div class="panel">
+<div class="login">
+
+<form method="post" id='form' name="form">
+	<input type="hidden" name="xtype" value="login" />
+	<input type="hidden" name='pass' id='pass' value="" />
+	<div class="form_t">
+        <span class="fl user_t">会员登录</span>
+        <span class="fr user_f"></span>
+    </div>
+	<div class="info username"><label>账号</label><input type="text" name="username" id="username" placeholder="请输入您的账号" title="请输入您的账号"></div>
+	<div class="info password"><label>密码</label><input type="password" name="password"  id="password" placeholder="您的密码" title="您的密码"></div>
+	<div class="info code"><label>验证码</label><input type="text" name="code" id='code' autocomplete="off" placeholder="验证码" title="验证码"><img src="../imgcode.php?act=init" alt="none" id="imgcode" title="看不清？点击更换一张验证图片" /></div>
+	<div class="info facode"><label>验证码</label><input type="text" name="facode" autocomplete="off" placeholder="二次验证码" maxlength="10" /></div>
+	<div class="control"><input type="submit" value="登录" ></div>
+</form>
+</div>
+
+
+<style type="text/css">
+.left_adv {
+    height: 389px;
+    width: 129px;
+    position: fixed;
+    left: 12px;
+    top: 185px;
+    z-index: 888;
+}
+.appqr-wrapper {
+    z-index: 99999;
+    width: 118px;
+}
+.appqr-wrapper .appqrcode {
+    width: 118px;
+    background-color: #d15606;
+    border-radius: 10px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+.appdlurl {
+    color: #fff;
+    text-align: center;
+    font-size: 16px;
+    font-style: italic;
+    font-weight: 600;
+    margin-top: 2px;
+    letter-spacing: -0.5px;
+}
+.appqr-wrapper .appqrcode img {
+    width: 98px;
+    height: 98px;
+    background-color: #fff;
+    box-sizing: border-box;
+    padding: 6px;
+    display: block;
+}
+.appqr-wrapper .text {
+    color: #fff;
+    text-align: center;
+    font-size: 15px;
+    line-height: 21px;
+    font-style: italic;
+    margin-top: 7px;
+    font-weight: 600;
+}
+.appqr img {
+    background-color: #fff;
+    width: 90px;
+    height: 90px;
+    margin: 0 auto;
+    top: 14px;
+    position: absolute;
+    left: 14px;
+}
+</style>
+<div class="left_adv">
+  <div class="appqr-wrapper">
+    <div class="appqrcode">
+      <img src="/css/login/qrcode.png">
+      <div class="text">手机扫码安装<br>安卓苹果APP</div>
+    </div>
+  </div>
+  <div class="appqr" title="手机扫码安装苹果安卓APP"></div>
+</div>
+</div>
+</div>
+</body>
+</html>

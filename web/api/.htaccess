@@ -1,0 +1,58 @@
+# API 路由配置
+
+# 启用 URL 重写
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /api/
+
+    # 强制 HTTPS
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ - [R=403,L]
+
+    # 用户查询 API
+    RewriteRule ^v1/users/(\d+)/balance$ v1/users.php [QSA,L]
+    RewriteRule ^v1/users/(\d+)$ v1/users.php [QSA,L]
+
+    # 投注记录 API
+    RewriteRule ^v1/bets/(\d+)$ v1/bets.php [QSA,L]
+    RewriteRule ^v1/bets$ v1/bets.php [QSA,L]
+
+    # 交易记录 API
+    RewriteRule ^v1/transactions/(\d+)$ v1/transactions.php [QSA,L]
+    RewriteRule ^v1/transactions$ v1/transactions.php [QSA,L]
+
+    # 开奖结果 API
+    RewriteRule ^v1/lottery_results/latest$ v1/lottery_results.php [QSA,L]
+    RewriteRule ^v1/lottery_results/([^/]+)$ v1/lottery_results.php [QSA,L]
+    RewriteRule ^v1/lottery_results$ v1/lottery_results.php [QSA,L]
+
+    # Webhook 管理 API
+    RewriteRule ^v1/webhooks/(\d+)/logs$ v1/webhooks.php [QSA,L]
+    RewriteRule ^v1/webhooks/(\d+)$ v1/webhooks.php [QSA,L]
+    RewriteRule ^v1/webhooks$ v1/webhooks.php [QSA,L]
+
+    # Token 生成 API
+    RewriteRule ^v1/tokens/game$ v1/tokens.php [QSA,L]
+
+    # 游戏嵌入页面
+    RewriteRule ^embed/game$ embed/game.php [QSA,L]
+</IfModule>
+
+# 安全设置
+<FilesMatch "\.(sql|md|json|log)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# 禁止访问隐藏文件
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# 设置 PHP 参数
+<IfModule mod_php7.c>
+    php_flag display_errors Off
+    php_flag log_errors On
+    php_value error_log /path/to/logs/api_error.log
+</IfModule>

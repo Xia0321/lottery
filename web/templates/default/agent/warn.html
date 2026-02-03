@@ -1,0 +1,127 @@
+{+include file='header2.html'+}
+<style type="text/css">
+.data_table .flag{width:70px;}
+.data_table td{height:30px;}
+.pantb td{text-align:center}
+input.s1{padding:1.5px;}
+</style>
+</head>
+<body id="topbody">
+<script id=myjs language="javascript">var mulu='{+$mulu+}';
+var js=1;var sss='warn';
+</script>
+
+<div class="main">
+	<div class="top_info">
+		<span class="title">警示金额设定</span><span class="right"></span>
+	</div>
+	<form style="margin:0;padding:0" method="post">
+		<div class="contents param_panel">
+			<div class="game_class">
+				<ul>
+{+if $config.fasttype==1+}
+<li><span>快开彩</span>
+{+section name=i loop=$game+}
+    {+if $game[i].fast==1+}<a href="javascript:void(0)" class="g{+$game[i].gid+}"  gid='{+$game[i].gid+}'>{+$game[i].gname+}</a>{+/if+}
+ {+/section+}
+</li>
+{+/if+}
+{+if $config.slowtype==1+}
+<li><span>低频彩</span>
+{+section name=i loop=$game+}
+    {+if $game[i].fast==0+}<a href="javascript:void(0)" class="g{+$game[i].gid+}" gid='{+$game[i].gid+}'>{+$game[i].gname+}</a>{+/if+}
+ {+/section+}
+</li>
+{+/if+}
+				</ul>
+			</div>
+ 
+			<table class="layout pantb">
+			<tbody>
+			<tr>
+				<td class="panel">
+					<table class="list data_table at_0">
+					<thead>
+					<tr>
+						<th>
+							<input type="checkbox" class="all">全选
+						</th>
+						<th>
+							种类
+						</th>
+						<th>
+							警示注额
+						</th>
+						<th>
+							止损金额
+						</th>
+					</tr>
+					</thead>
+					<tbody>
+                    
+   {+section name=i loop=$warn step=1 +}
+     {+if $smarty.section.i.index<=$nums+}
+   <TR class='nr' f='{+$warn[i].ftype+}'>
+    <td><input type="checkbox"  class="pantbc"  /><input type="button" class="s1 pantb" value="同步选中" /></td>
+    <th>{+$warn[i].name+}</th>
+    <td><input type="text" value='{+$warn[i].je+}'  class="flag je" /></td>
+    <td><input type="text" value='{+$warn[i].ks+}'  class="flag ks" /></td>
+   </TR>
+   {+/if+}
+   {+/section+}
+   					</tbody>
+					</table>
+				</td>
+				<td class="panel">
+					<table class="list data_table at_0">
+					<thead>
+					<tr>
+						<th>
+							<input type="checkbox" class="all">全选
+						</th>
+						<th>
+							种类
+						</th>
+						<th>
+							警示注额
+						</th>
+						<th>
+							止损金额
+						</th>
+					</tr>
+					</thead>
+					<tbody>
+   {+section name=i loop=$warn step=1 +}
+     {+if $smarty.section.i.index>$nums+}
+   <TR class='nr' f='{+$warn[i].ftype+}'>
+    <td><input type="checkbox"  class="pantbc"  /><input type="button" class="s1 pantb" value="同步选中" /></td>
+    <th>{+$warn[i].name+}</th>
+    <td><input type="text" value='{+$warn[i].je+}'  class="flag je" /></td>
+    <td><input type="text" value='{+$warn[i].ks+}'  class="flag ks" /></td>
+   </TR>
+   {+/if+}
+   {+/section+}
+   					</tbody>
+					</table>
+				</td>
+			</tr>
+			</tbody>
+			</table>
+		</div>
+        
+
+
+		<div class="control">
+			<input type="button" gid="{+$gid+}" class="button yiwotongbu" value="同步{+$flname+}">&nbsp;&nbsp;&nbsp;<input name="xtype" value="setautofly" type="hidden"><input type="button" value="保存" class="button send"><input type="button" value="取消" class="button" style="display:none">
+		</div>
+        
+	</form>
+</div>
+
+
+<div id='test'></div>
+<script language="javascript">
+var gid={+$gid+};
+</script>
+</body>
+</html>

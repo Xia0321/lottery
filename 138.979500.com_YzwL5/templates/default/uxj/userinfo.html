@@ -1,0 +1,110 @@
+{+include file='headers.html'+}
+<style type="text/css">
+
+    .button {
+        background: url(../css/default/img/red/btn-bg.png) repeat-x;
+        border: none;
+        width: 66px;
+        height: 18px;
+        line-height: 18px;
+        margin-right: 5px;
+        color: #fff;
+        letter-spacing: 3px;
+    }
+</style>
+
+</head>
+<body class='{+$skin+}'>
+    <script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='userinfo';</script>
+<div class="user_info_table">
+<table class="table user_info">
+<thead><tr><th colspan="2">会员资料</th></tr></thead>
+<tbody>
+<tr><th>会员账号</th><td>{+$username+}</td></tr>
+<tr><th>会员名称</th><td>{+$name+}</td></tr>
+<tr><th>所属盘口</th><td>{+$panstr+} 盘</td></tr>
+<tr><th>账户状态</th><td>{+$status+}</td></tr>
+<tr><th>快开彩额度</th>
+<td><label>{+$kmaxmoney+}</label>&nbsp;（余额:<label>{+$kmoney+}</label>）</td></tr>
+</tbody>
+</table>
+</div>
+<br/>
+
+<div>
+    <div class="tab-wrapper">
+      <a id="info" href="javascript:void(0)" class="active">彩票类</a>
+    </div>
+</div><div class="info_body">
+<div class="game_class">
+<ul>
+<li><span>快开彩</span>
+{+section name=i loop=$game+}
+<a href="javascript:void(0);" gid='{+$game[i].gid+}' class="games">{+$game[i].gname+}</a>
+{+/section+}
+</li>
+</ul>
+</div>
+<table class="list table data_table">
+<thead>
+        <Tr>
+            <th > 玩法 </th>
+            <th  style="display:none">保底赔率</th> 
+            {+foreach item=i from=$span+}
+            <th  class="{+$i+} p">{+$i+}盘退水%</th>
+            {+/foreach+}
+            <th >单注最低</th>
+            <th >单注最高</th>
+            <th >单期最高</th>
+            
+            
+
+           
+
+        </Tr>
+        <!--
+           <tr> {+foreach item=i from=$span+}
+            <th class="a p">A</th>
+            <th class="a p">B</th>
+            {+/foreach+} </tr>  -->
+
+        </thead>
+
+        <tbody>
+        {+section name=i loop=$game+}
+        {+assign var=pan value=$game[i].pan+}
+        {+section name=j loop=$pan+}
+        <tr class="gametr g{+$game[i].gid+}">
+            <td class="{+$pan[j].class+}" gid='{+$game[i].gid+}'>{+$pan[j].name+}</td>
+           
+            
+            
+
+            {+if $pan[j].abcd==1+}
+            {+foreach item=k from=$span+}
+            {+assign var='m' value=$k|@strtolower+}
+            {+if $pan[j].ab==1+}
+            {+assign var="tmp1" value="points`$m`a"+}
+            {+assign var="tmp2" value="points`$m`b"+}
+            <td>{+$pan[j].$tmp1+}/{+$pan[j].$tmp2+}</td>
+            {+else+}
+            {+assign var="tmp" value="points`$m`0"+}
+            <td>{+$pan[j].$tmp+}</td>
+            {+/if+}
+            {+/foreach+}
+            {+else+}
+            {+assign var="tmp" value=$span|@count+}
+            {+assign var="tmp2" value=$tmp*2+}
+            <td colspan="{+$tmp2+}">{+$pan[j].pointsa0+}</td>
+            {+/if+}
+            <td>{+$pan[j].minje+}</td>
+            <td>{+$pan[j].maxje+}</td>
+             <td>{+$pan[j].cmaxje+}</td>
+
+        </tr>
+        {+/section+}
+        {+/section+}
+        </tbody>
+</table>
+</div></body>
+</html>

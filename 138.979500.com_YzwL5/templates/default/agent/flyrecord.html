@@ -1,0 +1,38 @@
+{+include file='header2.html'+}
+</head>
+<body id="topbody">
+<script id=myjs language="javascript">var mulu='{+$mulu+}';
+var js=1;var sss='flyrecd';
+</script>
+<div class="main">
+<div class="top_info">
+<span class="title">资料更变记录</span>
+<span class="right"></span>
+</div>
+<div class="contents">
+<table class="data_table data_list list">
+<thead><tr><th>ID</th><th>变更时间</th><th>变更类别</th><th>原始值</th><th>变更值</th><th>变更人</th></tr></thead>
+<tbody>
+{+section name=i loop=$log+}
+<tr>
+	<td>{+$log[i].id+}</td>
+    <td>{+$log[i].moditime+}</td>
+    <td>{+$log[i].title+}</td>
+    <td>{+$log[i].oldvalue+}</td>
+    <td>{+$log[i].newvalue+}</td>
+    <td>{+$log[i].modiuser+}(代理)</td></tr>
+{+/section+}
+</tbody>
+</table>
+</div>
+
+<div class="page"><div class="page_info" page="{+$page+}" pcount="{+$pcount+}" uid='{+$uid+}'>
+<span class="record">共 <span>{+$rcount+}</span> 条记录</span>
+<span class="page_count">共 <span>{+$pcount+}</span> 页</span>
+<span class="page_control"><a class="prev">前一页</a>『<span class="current">&nbsp;1&nbsp;</span>&nbsp;<a href="javascript:void(0)" class="p">2</a>&nbsp;&nbsp;<a href="javascript:void(0)" class="p">3</a>&nbsp;&nbsp;<a href="javascript:void(0)" class="p">4</a>&nbsp;&nbsp;<a href="javascript:void(0)" class="p">5</a>&nbsp;&nbsp;<a href="javascript:void(0)" class="p">6</a>&nbsp;&nbsp;<a href="javascript:void(0)" class="p">7</a>&nbsp;&nbsp;<a href="javascript:void(0)" class="p">8</a>&nbsp;&nbsp;<a href="javascript:void(0)" class="p">9</a>&nbsp;&nbsp;<a href="javascript:void(0)" class="p">10</a>&nbsp;&nbsp;<a href="javascript:void(0)" class="p">11</a>&nbsp;&nbsp;<a href="javascript:void(0)" class="p">12</a>&nbsp;&nbsp;<a href="javascript:void(0)" class="p">13</a>&nbsp;&nbsp;<a href="javascript:void(0)" class="p">14</a>&nbsp;&nbsp;<a href="javascript:void(0)" class="p">15</a>&nbsp;』<a class="next">后一页</a></span>
+</div>
+</div>
+
+</div>
+</body>
+</html>

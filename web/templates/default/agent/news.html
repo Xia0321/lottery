@@ -1,0 +1,25 @@
+{+include file='header2.html'+}
+</head><body>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';
+var js=1;var sss='news';
+</script>
+<div class="main">
+<div class="top_info">
+<span class="title">最新公告</span>
+</div>
+<div class="contents">
+<table class="data_table data_list list">
+<thead><tr><th>时间</th><th>公告详情</th></tr></thead>
+<tbody>
+ {+section name=i loop=$news+}
+<tr><td>{+$news[i].time+}</td><td>{+$news[i].content+}</td></tr>
+{+/section+}
+</tbody>
+</table>
+</div>
+<div class="page"><div class="page_info">
+    </div>
+</div>
+</div>
+</body>
+</html>

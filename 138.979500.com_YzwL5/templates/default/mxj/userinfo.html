@@ -1,0 +1,131 @@
+<div class="contact_type1 mini">
+    <div class="contact_info1" style="border-bottom: 1px solid rgb(224, 224, 224);">
+        <div class="contact_name1">
+            会员名称:
+        </div>
+        <div class="contact_name1">
+            {+$username+}
+        </div>
+    </div>
+    <div class="contact_info1" style="border-bottom: 1px solid rgb(224, 224, 224);">
+        <div class="contact_name1">
+            会员名称:
+        </div>
+        <div class="contact_name1" style="color: rgb(0, 0, 0);">
+            {+$name+}
+        </div>
+    </div>
+    <div class="contact_info1" style="border-bottom: 1px solid rgb(224, 224, 224);">
+        <div class="contact_name1">
+            所属盘口:
+        </div>
+        <div class="contact_name1" style="color: rgb(0, 0, 0);">
+            {+$panstr+}盘
+        </div>
+    </div>
+    <div class="contact_info1" style="border-bottom: 1px solid rgb(224, 224, 224);">
+        <div class="contact_name1">
+            默认盘口:
+        </div>
+        <div class="contact_name1" style="color: rgb(0, 0, 0);">
+            <select id = "abcd" class="abcd">
+                    {+foreach item=i from=$span+}<OPTION value="{+$i+}" {+if ($i==$defaultpan)+}selected{+/if+}>{+$i+}盘</OPTION>{+/foreach+}
+            </select>&nbsp;&nbsp;<button class="button qd">设置默认盘口</button>
+        </div>
+    </div>
+    <div class="contact_info1" style="border-bottom: 1px solid rgb(224, 224, 224);">
+        <div class="contact_name1">
+            账户状态:
+        </div>
+        <div class="contact_name1" style="color: rgb(0, 0, 0);">
+            {+$status+}
+        </div>
+    </div>
+{+if $fudong==1+}
+    <div class="contact_info1" style="border-bottom: 1px solid rgb(224, 224, 224);">
+        <div class="contact_name1">
+            额度 :
+        </div>
+        <div class="contact_name1" style="color: rgb(0, 0, 0);">
+            {+$kmaxmoney+} (余额：{+$kmoney+})
+        </div>
+    </div>
+{+else+}
+    <div class="contact_info1" style="border-bottom: 1px solid rgb(224, 224, 224);">
+        <div class="contact_name1">
+            快开彩额度 :
+        </div>
+        <div class="contact_name1" style="color: rgb(0, 0, 0);">
+            {+$kmaxmoney+} (余额：{+$kmoney+})
+        </div>
+    </div>
+    <div class="contact_info1" style="border-bottom: 1px solid rgb(224, 224, 224);">
+        <div class="contact_name1">
+            低频彩额度 :
+        </div>
+        <div class="contact_name1" style="color: rgb(0, 0, 0);">
+            {+$maxmoney+} (余额：{+$money+})
+        </div>
+    </div>
+{+/if+}
+</div>
+<div class="personal_Navigation">
+    <div class="pn_title2">
+        
+    </div>
+    <button class="dropbtn"></button>
+    <div id="myDropdown" class="dropdown-content" style="display: none;">
+        {+section name=i loop=$game+} 
+        <div gid='{+$game[i].gid+}'>
+            <a>{+$game[i].gname+}</a>
+        </div>
+        {+/section+}
+    </div>
+</div>
+{+assign var='dp' value=$defaultpan|@strtolower+}
+<div class="personal-info-scroll">
+    {+section name=i loop=$game+}
+    {+assign var=pan value=$game[i].pan+}
+      {+section name=j loop=$pan+}
+    <div class="g{+$game[i].gid+} conlist">
+        <div class="no_date1">
+            <div class="nd_div1">
+                {+$pan[j].name+}
+            </div>
+        </div>
+        <div class="info_table_title1 {+if $pan[j].ab==1+}ab{+/if+}">
+            <div class="ir_4">
+                {+$defaultpan+}盘退水<br>
+
+                <span style="color: rgb(21, 117, 193);">
+                 {+if $pan[j].ab==1+}
+                     {+assign var="tmp" value="points`$dp`a"+}
+                     {+$pan[j].$tmp+}%<BR>
+                     {+assign var="tmp" value="points`$dp`b"+}
+                     {+$pan[j].$tmp+}%
+                 {+else+}
+                     {+assign var="tmp" value="points`$dp`0"+}
+                     {+$pan[j].$tmp+}%
+                 {+/if+}
+                </span>
+            </div>
+            <div class="ir_4">
+                单注最低<br>
+                <span style="color: rgb(21, 117, 193);">{+$pan[j].minje+}</span>
+            </div>
+            <div class="ir_4">
+                单注最高<br>
+                <span style="color: rgb(21, 117, 193);">{+$pan[j].maxje+}</span>
+            </div>
+            <div class="ir_4">
+                单期最高<br>
+                <span style="color: rgb(21, 117, 193);">{+$pan[j].cmaxje+}</span>
+            </div>
+        </div>
+        <div class="rough_lines">
+        </div>
+    </div>
+      {+/section+}
+    {+/section+}
+
+</div>

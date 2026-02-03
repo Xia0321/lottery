@@ -1,0 +1,146 @@
+{+include file='headers.html'+}
+</head>
+<body class='{+$skin+}'>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='rule';</script>
+<select id="lottery" name="lottery" class="game" >
+{+section name=i loop=$game+}
+<option value="{+$game[i].gid+}" {+if ($game[i].gid==$gid)+}selected{+/if+}>{+$game[i].gname+}</option>
+{+/section+}
+</select>  
+ <style type="text/css">
+    :root {
+      font-size: 13px;
+    }
+
+    body {
+      font-family: "Microsoft YaHei", Tahoma, Helvetica, Arial, sans-serif;
+      font-size: 1rem;
+      color: #333333;
+      margin: 0;
+      padding: 0;
+    }
+
+    a {
+      color: #333;
+      cursor: default;
+      text-decoration: none;
+    }
+
+    a[target] {
+      color: #2836f4;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    h4 {
+      font-size: 1.1rem;
+      margin-bottom: 15px;
+      margin-top: 0;
+    }
+
+    p {
+      margin-bottom: 15px;
+      margin-top: 0;
+    }
+
+    ol,
+    ul {
+      padding-left: 20px;
+    }
+
+    ul {
+      list-style-type: disc;
+    }
+
+    ol li,
+    ul li {
+      margin: 8px 0;
+    }
+
+    ul.time-ul {
+      list-style-type: square;
+      margin-top: -10px;
+    }
+
+    ul.time-ul li {
+      margin: 5px 0;
+    }
+
+    ul.inner-ul {
+      list-style-type: circle;
+    }
+
+    .body-wrapper {
+      padding: 15px;
+    }
+
+    .stress {
+      font-weight: 600;
+    }
+
+    .rules .headline {
+      font-size: 1.05rem;
+    }
+
+    .rules ol li strong {
+      color: #000;
+    }
+  </style>
+<div class="body-wrapper">
+<div class="notice">
+    <h4>重要声明</h4>
+    <!-- <ol>
+    <li>客户一经在本公司开户或投注，即被视为已接受这些规则。</li>
+    <li>如果客户怀疑自己的资料被盗用，应立即通知本公司，并更改详细资料，以前的使用者名称及密码将全部无效。</li>
+    <li>客户有责任确保自己的帐户及登入资料的保密性。以使用者名称及密码进行的任何网上投注将被视为有效。</li>
+    <li>为了避免出现争议，请务必在下注之后检查"下注状况"。</li>
+    <li>开奖后接受的投注，将被视为无效。</li>
+    <li>任何的投诉必须在开奖之前提出，本公司将不会受理任何开奖之后的投诉。</li>
+    <li>公布赔率时出现的任何打字错误或非故意人为失误，本公司将保留改正错误和按正确赔率结算注单的权力。</li>
+    <li>公布之所有赔率为浮动赔率，派彩时的赔率将以本公司确认投注时之赔率为准。</li>
+    <li>.如本公司察觉客户投注状况异常时，有权即时中止客户投注；在本公司中止下注前，客户之所有投注仍属有效，不得要求取消或延迟交收，以及不得有任何异议。</li>
+    <li>如因在本网站投注触犯当地法律，本公司概不负责。</li>
+  </ol> -->
+    <ol>
+      <li>客户一经在本公司开户或投注，即被视为已接受以下规则。</li>
+      <li>为避免出现争议，请您务必在下注之后查看「下注状况」。</li>
+      <li>任何投诉必须在开奖之前提出，公司不接受任何开奖之后的投诉。</li>
+      <li>
+        若公布赔率时出现任何打字错误或非故意人为失误，所有（相关）注单一律不算。
+      </li>
+      <li>
+        公布之所有赔率为浮动赔率，下注时请确认当前赔率及金额，下注确认后一律不能修改。
+      </li>
+      <li>
+        开奖后接受的投注，一律视为投机行为，[本局注单一律不返还本金及盈利]，敬请会员遵守游戏规则。
+      </li>
+      <li>
+        若本后台发现客户以不正当的手法投注或投注注单不正常，后台将有权「取消」相应之注单，客户不得有任何异议。
+      </li>
+      <li>
+        如因软件或线路问题导致交易内容或其他与账号设定不符合的情形，请在开奖前立即与本后台联络反映问题，否则本后台将以资料库中的数据为准。
+      </li>
+      <li>
+        倘若发生遭黑客入侵破坏行为或不可抗拒之灾害导致网站故障或资料损坏、数据丢失等情况，后台将以资料库数据为依据。如发现玩家使用不正当程序上获得利益，本公司有权要求取消所获得之不当得利。
+      </li>
+      <li>
+        各级管理人员及客户必须对本系统各项功能进行了解及熟悉，任何违反正常使用的操作，后台概不负责。
+      </li>
+      <li>请认真了解各款彩票游戏规则。</li>
+      <li>
+        如果会员信用额度超额或者为负数引起的争议，一律以公司处理为准。
+      </li>
+      <li>
+        客户有责任确保自己的账户及密码保密，如果因客户的账户、密码简单，或因泄露导致被盗用，造成的损失将由客户本人承担；同时应立即通知本公司，并更改其个人详细资料。
+      </li>
+      <li>
+        若官方福彩中心开奖错误导致本系统采集数据同时出错情况下，当期错误的所有注单以福彩中心官方当日最新数据为标准重新结算！在此特别声明，客户不得有任何异议。
+      </li>
+      <li>
+        本公司将不承担任何因客戶违反当地相关交易法令，所引起之任何责任。
+      </li>
+      <li>本系统所有投注皆含本金。</li>
+      <li>本公司有权保留一切争议事项及最后的决策权。</li>
+    </ol>
+  </div>
+

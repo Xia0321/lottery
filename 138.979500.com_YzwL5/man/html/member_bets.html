@@ -1,0 +1,68 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Welcome</title>
+<link rel="stylesheet" type="text/css" href="/default/css/table.css" />
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/libs.js"></script>
+<script type="text/javascript" src="/default/js/skin.js"></script>
+<script type="text/javascript">$(function(){LIBS.colorMoney('.color','minus')})</script>
+</head>
+<body>
+<div class="main report">
+<div class="search">
+</div>
+<table class="list table">
+<thead><tr><th>注单号</th><th>时间</th><th>类型</th><th>玩法</th><th>盘口</th><th>下注金额</th><th>退水(%)</th><th>可赢金额</th></tr></thead>
+<tbody>
+{+if ($rcount==0)+}
+<tr><td class="nodata" colspan="8">暂无数据!</td></tr>
+{+else+}
+{+section name=i loop=$lib+}
+<tr><td>{+$lib[i].tid+}</td><td class="time">{+$lib[i].time+}</td>
+<td class="period"><span class="lottery">{+$lib[i].gid+}</span><br /><span class="draw_number">第 {+$lib[i].qishu+} 期</span></td>
+<td class="contents">
+<span class="text">{+$lib[i].wf+}{+if $lib[i].content!=''+}:{+$lib[i].content+}{+/if+}</span> @ <span class="odds">{+$lib[i].peilv1+}{+if $lib[i].peilv2>1+}/{+$lib[i].peilv2+}{+/if+}</span></td>
+<td class="range">{+$lib[i].abcd+}</td><td class="amount">{+$lib[i].je+}</td><td>{+$lib[i].points+}%</td><td class="result color">{+$lib[i].ky+}</td>
+</tr>
+{+/section+}
+{+/if+}
+</tbody>
+<tfoot>
+<tr><td></td><td></td><td></td><td></td><th>总计</th><td>45</td><td></td><td class="result color">401.0</td></tr>
+</tfoot>
+</table>
+<script>
+  $(document).ready(function(){
+    $(".page-jump input").on("keydown", function(e){
+      if(e.keyCode === 13){
+        e.stopPropagation();
+        $(this).blur();
+        if($(this).val() <= 0 || $(this).parent().data("total-page") < $(this).val()){
+          alert("页面不存在");
+          return;
+        } else{
+          var navigatePage = $(this).parent().data("page-url").replace("page=1", "page=" + $(this).val());
+          location.href = location.origin + location.pathname + navigatePage;
+        }
+      }
+    })
+  })
+
+</script><div class="page_info">
+<span class="record">共 {+$rcount+} 笔记录</span>
+<span class="page_count">共 {+$pcount+} 页</span>
+<span class="page_control">
+  <a class="previous">首页</a> |
+<span class="page-jump" data-total-page="1" data-page-url="?page=1
+">跳转至<input type="number" style="width: 50px" maxlength="3"/>页 </span>
+<a class="previous">前一页</a>『
+<span class="current">1</span>
+』<a class="next">后一页</a> |
+  <a class="next">末页</a>
+</span>
+</div>
+</div>
+</body>
+</html>

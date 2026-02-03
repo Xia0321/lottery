@@ -1,0 +1,62 @@
+{+include file='header2.html'+} 
+<script language="javascript" type="text/javascript" src="../js/My97DatePicker/WdatePicker.js"></script>
+<style>
+a.red{color:#D50000}
+</style>
+</head>
+<body>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='his';</script>
+<div class="main">
+	<div class="top_info">
+		<span class="title">管理操作记录<span class="right"></span>
+	</div>
+<div class="contents param_panel">
+		<div class="game_class pages">	
+				<ul>
+
+<li><a href="javascript:void(0)" class="show"  page="show">登陆记录</a>
+<a href="javascript:void(0)" class="useredit" page="useredit">会员操作记录</a>
+<a href="javascript:void(0)" class="adminedit" page="adminedit">管理操作记录</a>
+<a href="javascript:void(0)" class="agentpeilv" page="agentpeilv">公司赔率记录</a>	
+<a href="javascript:void(0)" class="adminpeilv" page="adminpeilv">管理赔率记录</a>
+							
+				</ul>
+				
+			</div>
+		<div class="control">
+		<span>{+$page+}</span><span><input type="button" value="删除" class="button del"  /><INPUT type="text" value="{+$deldate+}" class="deldate" style="width: 80px;" size=8 />之前</span>
+	</div>	
+ <table class="data_table data_list list nrtb">
+ <thead>
+  <TR>
+   <th><input type="checkbox" id='clickall' />
+    全选</th>
+   <th>用户名</th>
+     <th>修改时间</th>
+     <th>修改者</th>
+     <th>修改IP</th>
+     <th>来源</th>
+     <th>备注</th>
+   <th><input type="button" class="btn3 btnf" id='delselect'  value="删除选中" /></th>
+  </TR></thead>
+  {+section name=i loop=$e+}
+  <TR>
+   <td><input type="checkbox" value='{+$e[i].id+}' /></td>
+   <td>{+$e[i].username+}</td>
+   <td>{+$e[i].moditime+}</td>
+   <td>{+$e[i].modiuser+} [{+$e[i].modisonuser+}]</td>
+   <td>{+$e[i].modiip+}</td>
+   <td>{+$e[i].addr+}</td>
+   <td>{+$e[i].action+}</td>
+   <td><input type="button" class="delone btn1 btnf" value='删除' /></td>
+  </TR>
+  {+/section+}
+ </table>
+</div>
+
+<script language="javascript">
+	var page = 'adminedit';
+	</script>
+<div id='test'></div>
+</body>
+</html>

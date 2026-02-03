@@ -1,0 +1,106 @@
+{+include file='header2.html'+}
+<style>
+td,th{height:30px;line-height:30px;}
+input.txt2{width:40px;}
+.setatt2 input.txt2{width:45px;}
+.hide{display:none;}
+</style>
+</head>
+<body>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='setatt';</script>
+<div class="main">
+	<div class="top_info">
+		<span class="title">赔率退水参数</span><span class="right"></span>
+	</div>
+	<div class="contents param_panel">	
+		<div class="game_class">
+				<ul>
+{+if $config.fasttype==1+}
+<li><span>快开彩</span>
+{+section name=i loop=$game+}
+    {+if $game[i].fast==1+}<a href="javascript:void(0)" class="g{+$game[i].gid+}"  gid='{+$game[i].gid+}'>{+$game[i].gname+}</a>{+/if+}
+ {+/section+}
+</li>
+{+/if+}
+{+if $config.slowtype==1+}
+<li><span>低频彩</span>
+{+section name=i loop=$game+}
+    {+if $game[i].fast==0+}<a href="javascript:void(0)" class="g{+$game[i].gid+}" gid='{+$game[i].gid+}'>{+$game[i].gname+}</a>{+/if+}
+ {+/section+}
+</li>
+{+/if+}
+				</ul>
+			</div>
+		
+<table class="data_table list setatt setatt2 patt">
+<thead>
+<TR> <Th colspan="10"></Th><th colspan="4">模式1<input type="button" class="btn1 btnf modetb" v='1' value="同步其他模式" /></th>  <th colspan="4" class="hide">模式2<input type="button" class="btn1 btnf modetb" v='2' value="同步其他模式" /></th><th colspan="4" class="hide">模式3<input type="button" class="btn1 btnf modetb" v='3' value="同步其他模式" /></th><th colspan="4"  class="hide">模式4<input type="button" class="btn1 btnf modetb" v='4' value="同步其他模式" /></th><th colspan="4"  class="hide">模式5<input type="button" class="btn1 btnf modetb" v='5' value="同步其他模式" /></th></TR>
+  <TR>
+   <th><input type="checkbox"  class="all" /></th>
+     <th  class='hide'>ID</th><th>大类</th><th>类别</th><th>退水最大值</th><th>退水调节差</th><th>赔率调节差</th><th>赔率调节差2</th><th>赔率差最大</th><th>补货赔率调整</th><th>补货赔率调整开关</th>
+     <th class="hide">A盘差</th><th>B盘差</th><th>C盘差</th><th>D盘差</th><th>AB差</th>
+     <th class="hide" >A盘差</th><th class="hide">B盘差</th><th class="hide">C盘差</th><th class="hide">D盘差</th><th class="hide">AB差</th>
+     <th class="hide">A盘差</th><th class="hide">B盘差</th><th class="hide">C盘差</th><th class="hide">D盘差</th><th class="hide">AB差</th>
+     <th class="hide">A盘差</th><th class="hide">B盘差</th><th class="hide">C盘差</th><th class="hide">D盘差</th><th class="hide">AB差</th>
+     <th class="hide">A盘差</th><th class="hide">B盘差</th><th class="hide">C盘差</th><th class="hide">D盘差</th><th class="hide">AB差</th>
+     
+
+	</TR></thead>
+
+  {+section name=i loop=$cs+}
+     <TR>
+     <td><input type="checkbox" /><input type="button" class="btn1 btnf patttb" value="同选中" /></td>
+     <td class='hide'>{+$cs[i].class+}</td>
+        <td class="bcs">{+$cs[i].bcname+}</td>
+        <td>{+$cs[i].name+}</td>
+         <td>{+$cs[i].points+}</td>
+        <td>{+$cs[i].pointsatt+}</td>
+        <td>{+$cs[i].peilvatt+}</td>
+        <td>{+$cs[i].peilvatt1+}</td>
+        <td>{+$cs[i].maxatt+}</td>
+        <td>{+$cs[i].flypeilv+}</td>
+        <td>{+$cs[i].flyifok+}[0/1]</td>
+
+        <td class='hide'>{+$cs[i].a1+}</td>
+        <td>{+$cs[i].b1+}</td>
+        <td>{+$cs[i].c1+}</td>
+        <td>{+$cs[i].d1+}</td>
+        <td>{+$cs[i].ab1+}</td>
+        
+        <td class='hide'>{+$cs[i].a2+}</td>
+        <td class='hide'>{+$cs[i].b2+}</td>
+        <td class='hide'>{+$cs[i].c2+}</td>
+        <td class='hide'>{+$cs[i].d2+}</td>
+        <td class='hide'>{+$cs[i].ab2+}</td>
+        
+        <td class='hide'>{+$cs[i].a3+}</td>
+        <td class='hide'>{+$cs[i].b3+}</td>
+        <td class='hide'>{+$cs[i].c3+}</td>
+        <td class='hide'>{+$cs[i].d3+}</td>
+        <td class='hide'>{+$cs[i].ab3+}</td>
+        
+        <td class='hide'>{+$cs[i].a4+}</td>
+        <td class="hide">{+$cs[i].b4+}</td>
+        <td class="hide">{+$cs[i].c4+}</td>
+        <td class="hide">{+$cs[i].d4+}</td>
+        <td class="hide">{+$cs[i].ab4+}</td> 
+        
+        <td class='hide'>{+$cs[i].a5+}</td>
+        <td class="hide">{+$cs[i].b5+}</td>
+        <td class="hide">{+$cs[i].c5+}</td>
+        <td class="hide">{+$cs[i].d5+}</td>
+        <td class="hide">{+$cs[i].ab5+}</td>
+     </TR>
+  {+/section+}
+</table>
+	</div>
+		<div class="control">
+			<input type="button" gid="{+$gid+}" class="button yiwotongbu" value="同步{+$flname+}">&nbsp;&nbsp;&nbsp;<input type="button" value="保存" class="button send">
+		</div>
+</div>
+<script language="javascript">
+var gid={+$gid+};
+</script>
+<div id='test'></div>
+</body>
+</html>

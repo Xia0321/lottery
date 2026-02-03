@@ -1,0 +1,128 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>注单明细</title>
+<link href="/js/jquery/new/jquery-ui.css" rel="stylesheet" type="text/css" />
+<link href="/default/css/agent/red/master.css" rel="stylesheet" type="text/css" />
+<link href="/default/css/agent/red/layout.css" rel="stylesheet" type="text/css" />
+<link href="/default/css/sweetalert.css" rel="stylesheet" type="text/css" />
+<link href="/default/css/loading.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="/js/jquery.js"></script>
+<script type="text/javascript" src="/js/jquery-ui.js"></script>
+<script type="text/javascript" src="/js/jquery.ui.datepicker-zh-CN.js"></script>
+<script type="text/javascript" src="/js/libs.js"></script>
+<script type="text/javascript" src="/js/json2.js"></script>
+<script type="text/javascript" src="/default/js/sweetalert.min.js"></script>
+<script>
+  $(document).ready(function(){
+    $(".page-jump input").on("keydown", function(e){
+      if(e.keyCode === 13){
+        e.stopPropagation();
+        $(this).blur();
+        if($(this).val() <= 0 || $(this).parent().data("total-page") < $(this).val()){
+          alert("页面不存在");
+          return;
+        } else{
+          var navigatePage = $(this).parent().data("page-url").replace("page=1", "page=" + $(this).val());
+          location.href = location.origin + location.pathname + navigatePage;
+        }
+      }
+    })
+  })
+
+</script><link href="/default/css/agent/bets.css" rel="stylesheet" type="text/css" />
+<link href="/default/css/betExtra.css" rel="stylesheet" type="text/css" />
+<script type="text/javascript" src="/default/js/bets.js"></script>
+<script type="text/javascript" src="/default/js/betExtra.js"></script>
+</head>
+<body>
+<div class="main">
+<div class="top_info">
+<span class="title">注单明细</span>
+<span class="right">
+<a class="back" href="javascript:history.go(-1)">返回</a>
+</span>
+</div>
+<div class="contents">
+<table class="data_table list">
+<thead>
+<tr>
+<th class="th-box">注单号
+</th>
+<th>投注时间</th>
+<th class="type th-box">投注种类
+</th>
+<th>账号</th>
+<th>投注内容</th>
+<th class="range th-box" style="width:250px">
+<div class="display_amount">
+下注金额
+</div>
+<div class="input_amount" style="display:none">
+<input  type"search" placeholder="最小下注金额" name="minAmount1" value="" style="width:80px" />&nbsp;
+<input type"search" placeholder="最大下注金额" name="maxAmount1" value="" style="width:80px"/>
+</div>
+<button class="th_icon1"></button>
+</th>
+</th>
+<th>退水</th>
+<th>下注结果</th>
+<th>本级占成</th>
+<th class="result">本级结果</th>
+<th>占成明细</th>
+</tr>
+</thead>
+<tbody>
+{+section name=i loop=$bao+}
+<tr>
+<td><a href='javascript:queryBetExtraDetail("{+$u.username+}", "{+$bao[i].tid+}", "{+$lottery+}")'>{+$bao[i].userid+}{+$bao[i].tid+}#</a> </span></td>
+<td>{+$bao[i].time+} 星期{+$bao[i].week+}</td>
+<td class="period">{+$bao[i].gname+}<div class="drawNumber1">{+$bao[i].qishu+}期</div></td>
+<td>{+$u.username+}<div>{+$u.abcd+}盘</div></td>
+<td><span class="drawNumber1">{+$bao[i].wf+}</span> @ <span class="odds">{+$bao[i].peilv1+}</span>
+</td>
+<td class="money">{+$bao[i].je+}</td>
+<td class="commission">{+$bao[i].points+}%</td>
+<td class="money dividend color"><span>未结算</span></td>
+<td class="share">0%</td>
+<td class="money color"></td>
+<td class="detail"><a bid="{+$bao[i].tid+}">明细</a></td>
+</tr>
+{+/section+}
+</tbody>
+<tfoot>
+<tr><th colspan="5">总计：{+$rcount+}笔</th><td class="money">2</td><td></td><td class="money color"></td><td></td>
+<td class="money color"></td><td></td></tr>
+</tfoot>
+</table>
+</div>
+<div id="betExtraDialog"></div>
+<div class="page"><div class="page_info">{+if ($rcount>0)+}
+<span class="record">共 {+$rcount+} 笔注单</span>
+<span class="page_count">共 {+$pcount+} 页</span>
+<span class="page_control">
+  <a class="previous">首页</a> |
+<span class="page-jump" data-total-page="1" data-page-url="?
+username={+$u.username+}&
+
+lottery={+$lottery+}&
+
+begin={+$dates+}&
+
+end={+$dates+}&
+
+settle=false&
+
+
+page=1
+">跳转至<input type="number" style="width: 50px" maxlength="3"/>页 </span>
+<a class="previous">前一页</a>『
+<span class="current">1</span>
+』<a class="next">后一页</a> |
+  <a class="next">末页</a>
+</span>{+/if+}
+</div>
+</div></div>
+</body>
+</html>

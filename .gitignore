@@ -1,0 +1,74 @@
+# 敏感配置文件
+web/data/config.inc.php
+web/data/*.php
+*.env
+
+# 数据库备份
+*.sql
+*.sql.gz
+backup/
+*.bak
+
+# 日志文件
+*.log
+logs/
+web/logs/
+
+# 临时文件
+*.tmp
+*.temp
+tmp/
+temp/
+pwd.txt
+
+# 上传文件
+web/upload/
+uploads/
+
+# 缓存文件
+cache/
+*.cache
+web/cache/
+
+# Session 文件
+sessions/
+web/sessions/
+
+# IDE 和编辑器
+.vscode/
+.idea/
+*.sublime-*
+.DS_Store
+Thumbs.db
+
+# Composer
+vendor/
+composer.phar
+composer.lock
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# 编译文件
+*.class
+*.pyc
+*.pyo
+__pycache__/
+
+# 操作系统
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# 其他
+*.swp
+*.swo
+*~
+.htaccess.backup

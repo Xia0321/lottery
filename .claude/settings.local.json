@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(openspec new:*)",
+      "Bash(openspec status:*)",
+      "Bash(openspec instructions proposal:*)",
+      "Bash(dir:*)",
+      "Bash(openspec instructions specs:*)",
+      "Bash(openspec instructions design:*)",
+      "Bash(grep:*)",
+      "Bash(openspec instructions tasks:*)",
+      "Bash(openspec apply:*)",
+      "Bash(openspec --help:*)",
+      "Bash(if [ -f \"D:\\\\lottery\\\\web\\\\class\\\\plugins\\\\function.accign_debug_infb.php\" ])",
+      "Bash(then echo \"File exists\")",
+      "Bash(else echo \"File not found\")",
+      "Bash(fi)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git config:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

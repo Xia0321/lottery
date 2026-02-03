@@ -1,0 +1,54 @@
+{+include file='header.html'+}
+<style>
+.zd th{}
+input.vsmall{width:20px;padding:0px;}
+.points{width:30px;}
+.kpoints{width:30px;}
+input.bred{background:red}
+a.red{color:#D50000}
+
+.nowtb td{font-size:11.5px;}
+.nowtb th{font-size:11.5px;}
+.nowtb tr:hover{background:#FCF}
+.user tr:hover{background:#FCF}
+select{width:85px;}
+</style>
+</head>
+<body>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='err';</script>
+<div class="xbody1" style="width:98%">
+<table class="einfo nowtb wd100" style='margin-top:10px;background:#fff;width:100%;'>
+  <tr class="bt">
+  <th><input type="checkbox" class="clickall" /></th>
+  <th>操作</th>
+  <th>类型</th>
+  <th>处理</th>
+  <th>彩种</th>
+   <th>期数</th>
+   <th>交易号</th>
+   
+   <th>类别</th>
+   <th>大盘</th>
+   <th>小盘</th>
+   <th>中</th>
+   <th>内容</th>
+   <th>金额</th>
+   <th>赔率</th>
+   <th>退水%</th>
+   <th>会员</th>
+   <th>时间</th>
+  </tr>
+ </table>
+</div>
+ <input type="hidden" class='sort' orderby='time' sorttype='DESC' page='1' xtype='2' con='' />
+<div id='test' style="margin-top:0px;"></div>
+<iframe name=sfrm id=sfrm style="display:none;"  ></iframe>
+<script language="javascript">
+layername= new Array();
+{+foreach item=i from=$layername key=key+}
+layername[{+$key+}]="{+$i+}";
+{+/foreach+}
+var layer =0 ;
+</script>
+</body>
+</html>

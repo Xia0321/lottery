@@ -1,0 +1,309 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Welcome</title>
+    <meta http-equiv="refresh" content="0; url=/Member/index" />    
+    <link rel="stylesheet" type="text/css" href="/default/css/main.css"/>
+    <link rel="stylesheet" type="text/css" href="/default/css/balls.css"/>
+    <link rel="stylesheet" type="text/css" href="/default/css/notice_popup.css?v=1221"/>
+    <link rel="stylesheet" type="text/css" href="/default/css/loading.css"/>
+    <link rel="stylesheet" type="text/css" href="/default/css/sweetalert.css"/>
+    <script type="text/javascript" src="/js/jquery.js"></script>
+    <script type="text/javascript" src="/js/jquery-ui.js"></script>
+    <script type="text/javascript" src="/js/libs.js"></script>
+    <script type="text/javascript" src="/js/json2.js"></script>
+    <script type="text/javascript" src="/js/swfobject.js"></script>
+    <script type="text/javascript" src="/default/js/member.js?v=160520"></script>
+    <script type="text/javascript" src="/default/js/skin.js"></script>
+    <script type="text/javascript" src="/default/js/notices.js"></script>
+    <script type="text/javascript" src="/default/js/hk6Base.js"></script>
+    <script type="text/javascript" src="/default/js/drawurls.js"></script>
+    <script type="text/javascript" src="/default/js/settingbet.js"></script>
+    <script type="text/javascript" src="/default/js/notice_popup.js?v=1219"></script>
+    <script type="text/javascript" src="/default/js/sweetalert.min.js"></script>
+    <script type="text/javascript" src="/default/js/gamecard.js"></script>
+    <script type="text/javascript">
+        var MAX_DIVIDEND =5000000;
+        var SOUND_URL = '/default/css/images/kaijiang.mp3';
+        noticePopupWithMore(2, 1, '公告：因本系统涉及现金结算，若凌晨6：30分前官网没公布开奖结果，将取消没开奖期的注单，如若第二天开奖或更改， 将不再结算！一切按报表交收！谢谢合作！！', '2019-11-18 18:57:16');
+noticePopupWithMore(2, 2, '公告：各级管理员,会员请注意，登陆本糸统必须认真阅读游戏规则;由于本公司不是网络商，无权操作开奖结果和结算报表，如出现各种网络问题，本公司凭着公正公平的理念，一切结算按星期一报表交收（如中途交收者或星期一交收后数据变动，一律不接受任何投诉）如有异议者请不要投注。投注者必须服从本公司规则！', '2019-11-01 12:52:16');
+    </script>
+</head>
+<body>
+<div id="header" class="header">
+    <div class="logo">
+            <span>{+$webname+}</span></div>
+    <div class="top">
+        <div class="menu">
+            <div class="menu1">
+                <div id="result_info" class="draw_number"></div>
+                <a id="result_balls" target="_blank"></a>
+            </div>
+            <div class="menu2">
+                <span><a target="frame" href="bets">未结明细</a></span> |
+                <span><a href="bets?settled=true" target="frame">今天已结</a></span> |
+                <span><a href="history" target="frame">两周报表</a></span> |
+                <span><a href="dresult?lottery={lottery}" target="frame">开奖结果</a></span> <br/>
+                <span><a target="frame" href="info?lottery={lottery}">个人资讯</a></span> |
+                <span><a target="frame" href="password">修改密码</a></span> |
+                <span><a href="rule?lottery={lottery}" target="frame">游戏规则</a></span> |
+                <span id="skinPanel"></span>
+            </div>
+            <div class="menu3"><a href="/logout?id=12345" class="logout">退出</a></div>
+            <div style="clear:both;"></div>
+        </div>
+        <div class="lotterys">
+            <div id="lotterys" style="display: none">
+                            <a href="javascript:void(0)" id="l_SGFT"
+                               lang="PK10_0"><span>SG飞艇</span></a>
+                            <a href="javascript:void(0)" id="l_BJPK10"
+                               lang="PK10_0"><span>北京赛车(PK10)</span></a>
+                            <a href="javascript:void(0)" id="l_PK10JSC"
+                               lang="PK10_0"><span>极速赛车</span></a>
+                            <a href="javascript:void(0)" id="l_CQHLSX"
+                               lang="SSC_0"><span>重庆欢乐生肖</span></a>
+                            <a href="javascript:void(0)" id="l_SSCJSC"
+                               lang="SSC_0"><span>极速时时彩</span></a>
+                            <a href="javascript:void(0)" id="l_XYFT"
+                               lang="PK10_0"><span>幸运飞艇</span></a>
+                            <a href="javascript:void(0)" id="l_AULUCKY5"
+                               lang="SSC_0"><span>澳洲幸运5</span></a>
+                            <a href="javascript:void(0)" id="l_AULUCKY10"
+                               lang="PK10_0"><span>澳洲幸运10</span></a>
+                            <a href="javascript:void(0)" id="l_LUCKYSB"
+                               lang="PK10_0"><span>极速飞艇</span></a>
+            </div>
+            <div class="show "></div>
+            <a class="more_game"><span>更多游戏 </span></a>
+            <a class="setting">设置</a>
+
+        </div>
+        <div class="sub">
+                    <div id="sub_SGFT" style="display:none"><a href="load?lottery=SGFT&page=lm">两面盘</a>
+<a href="load?lottery=SGFT&page=110">单号1 ~ 10</a>
+<a href="load?lottery=SGFT&page=gy">冠亚军组合</a></div>
+                    <div id="sub_BJPK10" style="display:none"><a href="load?lottery=BJPK10&page=lm">两面盘</a>
+<a href="load?lottery=BJPK10&page=110">单号1 ~ 10</a>
+<a href="load?lottery=BJPK10&page=gy">冠亚军组合</a></div>
+                    <div id="sub_PK10JSC" style="display:none"><a href="load?lottery=PK10JSC&page=lm">两面盘</a>
+<a href="load?lottery=PK10JSC&page=110">单号1 ~ 10</a>
+<a href="load?lottery=PK10JSC&page=gy">冠亚军组合</a></div>
+                    <div id="sub_CQHLSX" style="display:none"><a href="load?lottery=CQHLSX&page=lm">两面</a>
+<a href="load?lottery=CQHLSX&page=ball&index=1_5">1~5</a>
+<a href="load?lottery=CQHLSX&page=1z">一字组合</a>
+<a href="load?lottery=CQHLSX&page=2z">二字组合</a>
+<a href="load?lottery=CQHLSX&page=3z">三字组合</a>
+<a href="load?lottery=CQHLSX&page=2zdw">二字定位</a>
+<a href="load?lottery=CQHLSX&page=3zdw">三字定位</a>
+<a href="load?lottery=CQHLSX&page=2zhs&index=54">二字和数</a>
+<a href="load?lottery=CQHLSX&page=3zhs&index=543">三字和数</a>
+<a href="load?lottery=CQHLSX&page=zx3&index=TS1">组选三</a>
+<a href="load?lottery=CQHLSX&page=zx6&index=TS1">组选六</a>
+<a href="load?lottery=CQHLSX&page=fs&index=TS1">复式组合</a>
+<a href="load?lottery=CQHLSX&page=kd&index=TS1">跨度</a>
+<!--
+<a href="load?lottery=CQHLSX&page=ball&index=2">第二球</a>
+<a href="load?lottery=CQHLSX&page=ball&index=3">第三球</a>
+<a href="load?lottery=CQHLSX&page=ball&index=4">第四球</a> |
+<a href="load?lottery=CQHLSX&page=ball&index=5">第五球</a>--></div>
+                    <div id="sub_SSCJSC" style="display:none"><a href="load?lottery=SSCJSC&page=lm">两面</a>
+<a href="load?lottery=SSCJSC&page=ball&index=1_5">1~5</a>
+<a href="load?lottery=SSCJSC&page=1z">一字组合</a>
+<a href="load?lottery=SSCJSC&page=2z">二字组合</a>
+<a href="load?lottery=SSCJSC&page=3z">三字组合</a>
+<a href="load?lottery=SSCJSC&page=2zdw">二字定位</a>
+<a href="load?lottery=SSCJSC&page=3zdw">三字定位</a>
+<a href="load?lottery=SSCJSC&page=2zhs&index=54">二字和数</a>
+<a href="load?lottery=SSCJSC&page=3zhs&index=543">三字和数</a>
+<a href="load?lottery=SSCJSC&page=zx3&index=TS1">组选三</a>
+<a href="load?lottery=SSCJSC&page=zx6&index=TS1">组选六</a>
+<a href="load?lottery=SSCJSC&page=fs&index=TS1">复式组合</a>
+<a href="load?lottery=SSCJSC&page=kd&index=TS1">跨度</a>
+<!--
+<a href="load?lottery=SSCJSC&page=ball&index=2">第二球</a>
+<a href="load?lottery=SSCJSC&page=ball&index=3">第三球</a>
+<a href="load?lottery=SSCJSC&page=ball&index=4">第四球</a> |
+<a href="load?lottery=SSCJSC&page=ball&index=5">第五球</a>--></div>
+                    <div id="sub_XYFT" style="display:none"><a href="load?lottery=XYFT&page=lm">两面盘</a>
+<a href="load?lottery=XYFT&page=110">单号1 ~ 10</a>
+<a href="load?lottery=XYFT&page=gy">冠亚军组合</a></div>
+                    <div id="sub_AULUCKY5" style="display:none"><a href="load?lottery=AULUCKY5&page=lm">两面</a>
+<a href="load?lottery=AULUCKY5&page=ball&index=1_5">1~5</a>
+<a href="load?lottery=AULUCKY5&page=1z">一字组合</a>
+<a href="load?lottery=AULUCKY5&page=2z">二字组合</a>
+<a href="load?lottery=AULUCKY5&page=3z">三字组合</a>
+<a href="load?lottery=AULUCKY5&page=2zdw">二字定位</a>
+<a href="load?lottery=AULUCKY5&page=3zdw">三字定位</a>
+<a href="load?lottery=AULUCKY5&page=2zhs&index=54">二字和数</a>
+<a href="load?lottery=AULUCKY5&page=3zhs&index=543">三字和数</a>
+<a href="load?lottery=AULUCKY5&page=zx3&index=TS1">组选三</a>
+<a href="load?lottery=AULUCKY5&page=zx6&index=TS1">组选六</a>
+<a href="load?lottery=AULUCKY5&page=fs&index=TS1">复式组合</a>
+<a href="load?lottery=AULUCKY5&page=kd&index=TS1">跨度</a>
+<!--
+<a href="load?lottery=AULUCKY5&page=ball&index=2">第二球</a>
+<a href="load?lottery=AULUCKY5&page=ball&index=3">第三球</a>
+<a href="load?lottery=AULUCKY5&page=ball&index=4">第四球</a> |
+<a href="load?lottery=AULUCKY5&page=ball&index=5">第五球</a>--></div>
+                    <div id="sub_AULUCKY10" style="display:none"><a href="load?lottery=AULUCKY10&page=lm">两面盘</a>
+<a href="load?lottery=AULUCKY10&page=110">单号1 ~ 10</a>
+<a href="load?lottery=AULUCKY10&page=gy">冠亚军组合</a></div>
+                    <div id="sub_LUCKYSB" style="display:none"><a href="load?lottery=LUCKYSB&page=lm">两面盘</a>
+<a href="load?lottery=LUCKYSB&page=110">单号1 ~ 10</a>
+<a href="load?lottery=LUCKYSB&page=gy">冠亚军组合</a></div>
+        </div>
+
+    </div>
+</div>
+<div id="main">
+    <div class="side_left" id="side">
+        <div class="user_info">
+            <div class="title">账户信息</div>
+
+            <div class="zhanghu">
+                <div class="info">
+                    <label>账号：</label>
+                    <div class="inline-name">
+                        <span>{+$us.username+} ({+$us.defaultpan+}盘)</span>
+                    </div>
+                </div>
+                    <div id="account0" class="accounts" style="display:none">
+                        <div class="info"><label>快开彩额度：</label><span class="balance">{+$us.kmoney+}</span>
+                        </div>
+                        <div class="info"><label>未结算金额：</label><span class="betting">0</span></div>
+                    </div>
+                    <div id="account1" class="accounts" style="display:none">
+                        <div class="info"><label>全国彩额度：</label><span class="balance">0</span>
+                        </div>
+                        <div class="info"><label>未结算金额：</label><span class="betting">0</span></div>
+                    </div>
+                    <div id="account2" class="accounts" style="display:none">
+                        <div class="info"><label>香港彩额度：</label><span class="balance">0</span>
+                        </div>
+                        <div class="info"><label>未结算金额：</label><span class="betting">0</span></div>
+                    </div>
+                    <div id="account3" class="accounts" style="display:none">
+                        <div class="info"><label>第三方额度：</label><span class="balance">0</span>
+                        </div>
+                        <div class="info"><label>未结算金额：</label><span class="betting">0</span></div>
+                    </div>
+            </div>
+        </div>
+
+        <input type="hidden" id="userType" value="1"/>
+
+                <div class="betdone" id="drawOfficial">
+                    <div class="title"><a href="http://168kai.com"
+                                          target="_blank">全国开奖网</a></div>
+                </div>
+
+        <div class="betdone" id="lastBets">
+            <div class="title"><span>最新注单</span></div>
+            <ul class="bets">
+            </ul>
+        </div>
+        <div style="display:none" id="betResultPanel">
+
+            <div class="control s0">
+                <a onclick="resetPanel()" href="javascript:void(0)">返 回</a>
+            </div>
+            <div id="betResultDrawNumber" class="Paneltitle"></div>
+            <div class="bresults">
+                <ul class="bets" id="betReulstList"></ul>
+                <table class="total s0">
+                    <tbody>
+                    <tr>
+                        <td class="label">下注金额</td>
+                        <td id="betResultCount"></td>
+                    </tr>
+                    <tr>
+                        <td class="label">合计金额</td>
+                        <td id="betResultTotal"></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+    <div class="Notice"></div>
+    <div class="details">
+        <div class="back_body"></div>
+        <div id="dtlColor" class="details_div">
+            <a href="#">
+                <div class="close_icon"></div>
+            </a>
+            <div class="details_icon">
+                <div></div>
+            </div>
+            <div id="dtlFont" class="details_font"></div>
+        </div>
+    </div>
+
+    <div id="redPack" hidden>
+        <div class="back_body"></div>
+        <div class="redpack_body">
+            <img src="/default/images/close.png" onClick="$('#redPack').hide();" class="redpack_close"/>
+            <div class="redpack_amt_con">
+                <span class="redpack_amount">0</span>
+                <span class="redpack_currency"> 元</span>
+            </div>
+            <div class="redpack_remark"></div>
+            <!--<img src="default/images/hongbao_popup.png" />-->
+        </div>
+    </div>
+    <div class="frame">
+        <iframe id="frame" name="frame" frameborder="0"></iframe>
+    </div>
+</div>
+<div id="footer">
+    <div class="info">
+        <marquee id="notices" scrollamount="2"></marquee>
+    </div>
+    <a href="javascript:void(0)" class="more">更多</a></div>
+
+<div id="settingbet" title="快选金额" style="display:none;">
+    <input name="bet_1" placeholder="快选金额" class="ds"
+           onkeypress='return event.charCode>=48 && event.charCode<=57'/><br/>
+    <input name="bet_2" placeholder="快选金额" class="ds"
+           onkeypress='return event.charCode>=48 && event.charCode<=57'/><br/>
+    <input name="bet_3" placeholder="快选金额" class="ds"
+           onkeypress='return event.charCode>=48 && event.charCode<=57'/><br/>
+    <input name="bet_4" placeholder="快选金额" class="ds"
+           onkeypress='return event.charCode>=48 && event.charCode<=57'/><br/>
+    <input name="bet_5" placeholder="快选金额" class="ds"
+           onkeypress='return event.charCode>=48 && event.charCode<=57'/><br/>
+    <input name="bet_6" placeholder="快选金额" class="ds"
+           onkeypress='return event.charCode>=48 && event.charCode<=57'/><br/>
+    <input name="bet_7" placeholder="快选金额" class="ds"
+           onkeypress='return event.charCode>=48 && event.charCode<=57'/><br/>
+    <input name="bet_8" placeholder="快选金额" class="ds"
+           onkeypress='return event.charCode>=48 && event.charCode<=57'/><br/>
+
+    <label>
+        <input name="settingbet" type="radio" id="settingbet_0" value="1" checked="checked"/>
+        启动
+    </label>
+    <label>
+        <input name="settingbet" type="radio" id="settingbet_1" value="0"/>
+        停用
+    </label>
+    <br/>
+    <br/>
+    <input type="button" class="button" value="储存" onClick="submitsetting()"/>
+</div>
+<script>
+    $(document).on("keydown", function (e) {
+        if (e.keyCode === 13) {
+            $('.Notice > div:not([style="display: none;"]) .notice_button').click();
+            if ($('.Notice > div[style="display: none;"]').length === $('.Notice > div').length) {
+                $(document).off("keydown");
+            }
+        }
+    })
+</script>
+<div class="loading-wrapper"></div>
+</body>
+</html>

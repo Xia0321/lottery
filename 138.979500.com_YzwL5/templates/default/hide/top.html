@@ -1,0 +1,226 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>Welcome</title>
+<link href="/css/default/jquery-ui.css" rel="stylesheet" type="text/css" />
+<link href="/css/default/master.css" rel="stylesheet" type="text/css" />
+<link href="/css/default/layout.css" rel="stylesheet" type="text/css" />
+<script language="javascript" src="/js/jquery-1.8.3.min.js"></script>
+<script language="javascript" src="/js/ui/jquery-ui.js"></script>
+<script language="javascript">
+function hideinfo(){ if(event.srcElement.tagName=="A"){
+   window.status=event.srcElement.innerText}
+}
+document.onmouseover=hideinfo; 
+document.onmousemove=hideinfo;
+var globalpath = "{+$globalpath+}";
+
+</script>
+<style type="text/css">
+.menus{width:160px;background:url(/css/default/img/menu.png);text-align:center;cursor:pointer;float:left;}
+.status{float:left;}
+.games{display:none;position:absolute;
+    min-height:400px;
+    background:#FFF;z-index:99;
+    width: 323px;
+ 
+}
+.games li{
+    list-style: none;
+    float: left;
+    height:100%;
+    width: 160px;
+    border-bottom: solid 1px #fff;
+}
+.games li:nth-child(even){
+    border-left: solid 1px #fff;
+}
+
+.games  a {
+    float: left; 
+    width: 160px;
+    display: block;
+    height: 30px;
+    color: #fff;
+    line-height: 30px;
+    background: #1554BE;
+    text-shadow: 1px 1px 0 #426b9e;
+    text-align: center;
+    float: left;
+    font-size: 14px;
+    padding-left:5px;
+}
+
+.games a:hover{ 
+    background: #629EDA;
+}
+#online{cursor:pointer}
+.qzclose{padding:2px;}
+.upkj{float:left;font-weight:bold;color:#000;}
+
+
+</style>
+<link href="/css/default/ball.css" rel="stylesheet" type="text/css" />
+</head>
+<body id="topbody">
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='top';</script>
+<ul class="games" id='nav'>
+  {+section name=i loop=$gamecs+}
+     <li > <a gid={+$gamecs[i].gid+}  gname={+$gamecs[i].gname+}  fenlei={+$gamecs[i].fenlei+} {+if $gid==$gamecs[i].gid+}class='xz'{+/if+} href='javascript:void(0)'>{+$gamecs[i].gname+}</a></li>
+  {+/section+}
+</ul>
+    <div class="header">
+    <div class="top" style="position:relative">
+        <div class="logo"><span>{+$webname+}</span></div>
+        <div class="menu">
+        <div class="expire_info">
+              <div class="menus"></div><div class="status"><span style="margin-left:5px;"><label class=qishu>{+$qishu+}</label>期</span>  <span class="panstatus" s='{+$panstatus+}' style="margin-left:5px;"><span>{+if $panstatus==1+}距关盘:{+else+}距开盘:{+/if+}</span><label class="time0">{+$pantime+}</label></span>{+if $gid==100+}<span s='{+$otherstatus+}' class="otherstatus hide" style="margin-left:5px;"><span>{+if $otherstatus==1+}距正码关盘:{+else+}距正码开盘:{+/if+}</span><label class="time1">{+$othertime+}</label></span>{+/if+}&nbsp;<input type="button" value="关盘" class="s1 qzclose"  />      </div><Div style="float:left;">
+<label class='upqishu chu blue' m='{+$upkj+}'>{+$upqishu+}</label><span class="hei">期开奖:</span></Div><div class="upkj"></div>
+        </div>
+        <ul class="menu_title topmenu">
+            <li>
+                {+if $slib==1+}<a href="javascript:void(0);" class="lib control" i=0 x="slib">即时注单</a>{+/if+}
+                {+if $suser==1+}<a href="javascript:void(0);" x='suser'  i=1>用户管理</a>{+/if+}
+                {+if $baox==1+}<a href="javascript:void(0);" target="frame" x="baox">报表查询</a>{+/if+}
+                <a href="javascript:void(0);" target="frame" x="longs">开奖结果</a>
+                <a href="javascript:void(0);" target="frame"  i=3 x="caopan">系统功能</a>
+                <a href="javascript:void(0);" target="frame" i=4 class='xjgl'  x="money" {+if $money!=1+}style='display:none;'{+/if+}>现金管理</a>
+                {+if $hide==1+} <a href="javascript:void(0);" target="frame"  i=5 x="check">高级功能</a>{+/if+}                
+                <a href="javascript:void(0);" target="frame" x="changepass2">密码修改</a>
+                <a href="javascript:void(0);">退出</a>
+            </li>
+        </ul>
+    </div>
+        
+        
+
+        <ul class="tools">
+            <!--  <li class="tools_skin"><a href="javascript:;"><span>皮&nbsp;肤</span></a></li>-->
+            <li class="tools_user"><span class="ico"></span></li>
+            <li class="tools_user">在线会员：<span class="online">{+$onlinenum+}</span><br/>管理员：{+$name+}</li>
+        </ul>
+
+    </div>
+    
+    <div class="lottery nav" id="lotterys">
+    {+section name=i loop=$gamecs+}
+    <a gid={+$gamecs[i].gid+} class='{+$gamecs[i].class+}{+if $gid==$gamecs[i].gid+} s{+/if+}' >{+if $gid==$gamecs[i].gid+}{+$gamecs[i].gname+}{+else+}{+$gamecs[i].gname+}{+/if+}</a>
+     {+/section+}
+        </div>
+    
+    
+        {+if $libset==1+}<ul class="menu_sub"><li> </li></ul>{+/if+}
+        {+if $suser==1+}<ul class="menu_sub"><li> </li></ul>{+/if+}
+        {+if $baox==1+}<ul class="menu_sub"><li> </li></ul>{+/if+}
+        <ul class="menu_sub">
+            <li class="menu_sub_title">当前选中：<span>系统功能</span></li>
+            <li class="menu_sub_link">
+            {+if $kj==1+}
+             <a href="javascript:void(0);" target="frame" u="kj" type='show'>开奖管理</a> | 
+            {+/if+} 
+            {+if $buhuo==1+}
+            <a href="javascript:void(0)" target="frame" u='libset' type='show'>补货设置</a> |            
+            <a href="javascript:void(0);" target="frame" u="fly" type='show'>飞单设置</a> |
+            <a href="javascript:void(0);" target="frame" u="fly" type='flylist'>飞单记录</a> |          
+            {+/if+}
+            {+if $liushui==1+}
+            <a href="javascript:void(0);" target="frame" u="fly" type='shui'>赚分设置</a> |                  
+            {+/if+}
+            {+if $libset==1+}         
+            <a href="javascript:void(0)" target="frame" u='libset' type='warn'>警示金额</a> | 
+            <a href="javascript:void(0)" target="frame" u='libset' type='auto'>自动降倍</a> | 
+            {+/if+}
+            {+if $now==1+}
+            {+/if+}
+            {+if $zshui==1+}
+            <a href="javascript:void(0)" target="frame" u='zshui' type='ma'>号码属性</a> | 
+            <a href="javascript:void(0)" target="frame" u='zshui' type='ptype'>默认赔率</a> | 
+            <a href="javascript:void(0)" target="frame" u='zshui' type='show'>默认退水</a> | 
+            <a href="javascript:void(0)" target="frame" u='zshui' type='setattshow'>赔率参数</a> |  
+            {+/if+}
+            {+if $news==1+}
+            <a href="javascript:void(0)" target="frame" u='news' type='show'>消息</a> |         
+            {+/if+}
+            {+if ($hide==1 || ($caopan==1 && $xxtz2==1))+}
+            <a href="javascript:void(0)" target="frame" u='xxtz2' type='show'>注单删改</a> | 
+            {+/if+}
+            {+if ($hide==1 | $caopan==1)+}
+            <a href="javascript:void(0)" target="frame" u='caopan' type='show'>操盘员</a> | 
+            {+if $err==1+}<a href="javascript:void(0)" target="frame" u='err' type='show'>异常注单</a> | {+/if+}
+            <a href="javascript:void(0)" target="frame" u='history' type='show'>记录管理</a> | 
+            <a href="javascript:void(0)" target="frame" u='sysconfig' type='show'>参数</a> |
+            <a href="javascript:void(0)" target="frame" u='online' type='show'>在线</a>
+            {+/if+}
+            
+           
+            </li>
+        </ul>
+    
+        <ul class="menu_sub" {+if $money!=1+}style='display:none;'{+/if+}>           
+            <li class="menu_sub_title">当前选中：<span>现金管理</span></li>
+            <li class="menu_sub_link">
+            <a href="javascript:void(0)" target="frame" u='money' type='chongzhi'>充值管理</a> | 
+            <a href="javascript:void(0)" target="frame" u='money' type='tikuan'>提现管理</a> | 
+            <a href="javascript:void(0)" target="frame" u='money' type='moneyuser'>现金会员</a> | 
+            <a href="javascript:void(0)" target="frame" u='money' type='bank'>银行</a> | 
+            <a href="javascript:void(0)" target="frame" u='money' type='chongzhifs'>充值方式</a> | 
+            <a href="javascript:void(0)" target="frame" u='money' type='banknum'>银行账号</a> | 
+            <a href="javascript:void(0)" target="frame" u='money' type='notices'>消息管理</a> |
+                <a href='javascript:void(0);' u="now" type='show'>注单管理</a>
+            </li>           
+        </ul>
+
+
+       {+if $hide==1+}
+        <ul class="menu_sub">             
+            <li class="menu_sub_title">当前选中：<span>高级功能</span></li>
+            <li class="menu_sub_link">    
+            <a href="javascript:void(0);" target="frame" u="baox" type='oldshow'>报表查询</a> | 
+            <a href="javascript:void(0)" target="frame" u='xxtz' type='show'>注单明细</a> |   
+            <a href="javascript:void(0)" target="frame" u='now' type='show'>注单管理</a> |   
+            <a href="javascript:void(0)" target="frame" u='webconfig' type='show'>网站配置</a> |             
+            
+            <a href="javascript:void(0)" target="frame" u='zshui' type='gameset'>彩种开放</a> | 
+                  
+            <a href="javascript:void(0)" target="frame" u='class' type='classpan'>玩法归类</a> | 
+            <a href="javascript:void(0)" target="frame" u='class' type='bigclass'>大分类</a> | 
+            <a href="javascript:void(0)" target="frame" u='class' type='sclass'>小分类</a> | 
+            <a href="javascript:void(0)" target="frame" u='class' type='class'>玩法分类</a> | 
+            <a href="javascript:void(0)" target="frame" u='play' type='show'>玩法列表</a> | 
+            <a href="javascript:void(0)" target="frame" u='err' type='show'>异常注单</a> | 
+                  
+            {+if $hides==1+} 
+             
+            <a href="javascript:void(0)" target="frame" u='check' type='show'>检测</a> |    
+            <a href="javascript:void(0)" target="frame" u='message' type='show'>会员反馈</a> | 
+            <a href="javascript:void(0)" target="frame" u='play' type='downlist'>下载记录</a> | 
+            <a href="javascript:void(0)" target="frame" u='loglist' type='loglist'>注单记录</a> 
+            {+/if+}
+            </li>
+        </ul>  
+        {+/if+}
+
+    
+
+   </div> 
+    <div id="contents" >
+        <iframe id="frame" name="frame" src='/hide/new.php' frameborder="0"></iframe>
+    </div>
+    <div id="footer" class="footer"><div class="notice"><marquee scrolldelay="90" scrollamount="4"><a id="notices"  href="javascript:void(0);" target="frame"></a></marquee></div><a href="javascript:void(0)" target="frame" class="more">更多</a></div>
+    
+<div id="dialog" title="您有新的交易请求" style="display:none;">
+  <p style="text-align:center"><button class="clqq s1">前往处理</button></p>
+</div>
+<script language="javascript" id='zhishu'>
+var ngid={+$gid+};
+var fenlei = {+$fenlei+};
+var layer={+$layer+};
+ma = [];
+     ma['紅'] = new Array(01,02,07,08,12,13,18,19,23,24,29,30,34,35,40,45,46); 
+     ma['藍'] = new Array(03,04,09,10,14,15,20,25,26,31,36,37,41,42,47,48); 
+     ma['綠'] = new Array(05,06,11,16,17,21,22,27,28,32,33,38,39,43,44,49); 
+
+</script>
+</body>
+</html>

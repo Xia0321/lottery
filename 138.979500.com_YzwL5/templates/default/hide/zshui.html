@@ -1,0 +1,87 @@
+{+include file='header2.html'+}
+<style>
+td,th{height:30px;line-height:30px;}
+tr:hover{background:#DEEFD8}
+input{width:52px;}
+</style>
+</head>
+<body>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='zshui';</script>
+<div class="main">
+	<div class="top_info">
+		<span class="title">默认退水设置</span><span class="right"></span>
+	</div>
+	
+	<div class="contents param_panel">	
+		<div class="game_class">
+				<ul>
+{+if $config.fasttype==1+}
+<li><span>快开彩</span>
+{+section name=i loop=$game+}
+    {+if $game[i].fast==1+}<a href="javascript:void(0)" class="g{+$game[i].gid+}"  gid='{+$game[i].gid+}'>{+$game[i].gname+}</a>{+/if+}
+ {+/section+}
+</li>
+{+/if+}
+{+if $config.slowtype==1+}
+<li><span>低频彩</span>
+{+section name=i loop=$game+}
+    {+if $game[i].fast==0+}<a href="javascript:void(0)" class="g{+$game[i].gid+}" gid='{+$game[i].gid+}'>{+$game[i].gname+}</a>{+/if+}
+ {+/section+}
+</li>
+{+/if+}
+				</ul>
+			</div>
+			
+<table class="data_table list">
+
+  <TR>
+    <th rowspan="2"><input type="checkbox"  class="all" /></th> <th rowspan="2">大类</th><th rowspan="2" style="display:none;">类别</th><th rowspan="2"   style="display:none;">赔率差最大</th><th rowspan="2"  style="display:none;">保底赔率</th><th rowspan="2">单期最高</th><th rowspan="2">单注最高</th><th rowspan="2">单注最低</th><th colspan="2">A盘退水%</th><th colspan="2">B盘退水%</th><th colspan="2">C盘退水%</th><th colspan="2">D盘退水%</th>
+     
+  </TR>
+  <tr>
+     <th>A</th><th>B</th><th>A</th><th>B</th><th>A</th><th>B</th><th>A</th><th>B</th>
+  </tr>
+  {+section name=i loop=$zpan+}
+     <TR>
+     <td><input type="checkbox"   /><input type="button" class="btn1 btnf pantb" value="同选中" /></td>
+        <td>{+$zpan[i].name+}</td>
+        <td  style="display:none;">-</td>
+        <td  style="display:none;">-</td>
+        <td  style="display:none;">-</td>
+        <td>{+$zpan[i].cmaxje+}</td><td>{+$zpan[i].maxje+}</td>
+        <td>{+$zpan[i].minje+}</td>
+        {+if $zpan[i].abcd==1+}
+             {+if $zpan[i].ab==1+}
+                <td>{+$zpan[i].pointsaa+}</td>
+                <td>{+$zpan[i].pointsab+}</td>
+                <td>{+$zpan[i].pointsba+}</td>
+                <td>{+$zpan[i].pointsbb+}</td>
+                <td>{+$zpan[i].pointsca+}</td>
+                <td>{+$zpan[i].pointscb+}</td>
+                <td>{+$zpan[i].pointsda+}</td>
+                <td>{+$zpan[i].pointsdb+}</td>
+             {+else+}
+                <td colspan="2">{+$zpan[i].pointsa0+}</td>
+                <td colspan="2">{+$zpan[i].pointsb0+}</td>
+                <td colspan="2">{+$zpan[i].pointsc0+}</td>
+                <td colspan="2">{+$zpan[i].pointsd0+}</td>
+             {+/if+}
+        {+else+}
+                <td colspan="8">{+$zpan[i].pointsa0+}</td>
+        {+/if+}
+     </TR>
+  {+/section+}
+</table>
+
+
+	</div>
+		<div class="control">
+			<input type="button" gid="{+$gid+}" class="button yiwotongbu" value="同步{+$flname+}">&nbsp;&nbsp;&nbsp;<input type="button" value="保存" class="button send">
+		</div>
+</div>
+<script language="javascript">
+var gid={+$gid+};
+</script>
+<div id='test'></div>
+</body>
+</html>

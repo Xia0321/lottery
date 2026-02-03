@@ -1,0 +1,31 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"   {+if $rkey==0+}oncontextmenu="return false"{+/if+}><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Welcome</title> <link href="/css/default/jquery-ui.css" rel="stylesheet" type="text/css">
+<link href="/css/default/master.css" rel="stylesheet" type="text/css">
+<link href="/css/default/layout.css" rel="stylesheet" type="text/css">
+<link href="/css/default/form_validate.css" rel="stylesheet" type="text/css">
+<script language="javascript" src="/js/jquery-1.8.3.min.js"></script>
+<script language="javascript" src="/js/public.js"></script>
+<script language="javascript" src="/js/md5.js"></script>
+
+<script language="javascript">
+function hideinfo(){ if(event.srcElement.tagName=="A"){
+   window.status=event.srcElement.innerText}
+}
+document.onmouseover=hideinfo; 
+document.onmousemove=hideinfo;
+var globalpath = "{+$globalpath+}";
+function changeh(){
+    var obj = parent.document.getElementById("frame"); //取得父页面IFrame对象  
+    var h= document.body.clientHeight+500;
+    obj.style.height = h+"px"; //调整父页面中IFrame的高度为此页面的高度
+    //obj.scrollTo(0, 0);
+}
+
+</script>
+
+<style type="text/css">
+.button{color:#fff !important}
+.tcenter{text-align:center}
+</style>

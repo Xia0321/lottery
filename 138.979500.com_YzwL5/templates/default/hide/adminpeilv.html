@@ -1,0 +1,67 @@
+{+include file='header2.html'+} 
+<script language="javascript" type="text/javascript" src="../js/My97DatePicker/WdatePicker.js"></script>
+<style>
+a.red{color:#D50000}
+</style>
+</head>
+<body>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='his';</script>
+<div class="main">
+	<div class="top_info">
+		<span class="title">管理赔率记录<span class="right"></span>
+	</div>
+<div class="contents param_panel">
+		<div class="game_class pages">	
+				<ul>
+
+<li><a href="javascript:void(0)" class="show"  page="show">登陆记录</a>
+<a href="javascript:void(0)" class="useredit" page="useredit">会员操作记录</a>
+<a href="javascript:void(0)" class="adminedit" page="adminedit">管理操作记录</a>
+<a href="javascript:void(0)" class="agentpeilv" page="agentpeilv">公司赔率记录</a>	
+<a href="javascript:void(0)" class="adminpeilv" page="adminpeilv">管理赔率记录</a>
+							
+				</ul>
+				
+			</div>
+		<div class="control">
+		<span>{+$page+}</span><span><input type="button" value="删除" class="button del"  /><INPUT type="text" value="{+$deldate+}" class="deldate" style="width: 80px;" size=8 />之前</span>
+	</div>	
+ <table class="data_table data_list list nrtb">
+  <thead>
+   <th><input type="checkbox" id='clickall' />
+    全选</th><th>
+       <select class="game wd120">
+ {+section name=i loop=$game+}
+  
+     <option value="{+$game[i].gid+}" {+if $game[i].gid==$gid+}selected{+/if+}>{+$game[i].gname+}</option>
+     
+  {+/section+}
+   </select>
+    </th>
+    <th>类别</th>
+     <th>赔率值</th>
+   <th>备注</th>
+   <th>时间</th>
+   <th>用户</th>
+   <th><input type="button" class="btn3 btnf" id='delselect'  value="删除选中" /></th>
+  </TR></thead>
+  {+section name=i loop=$p+}
+  <TR>
+   <td><input type="checkbox" value='{+$p[i].id+}' /></td>
+   <td>{+$p[i].gname+}</td>
+   <td>{+$p[i].pid+}</td>
+   <td>{+$p[i].peilv+}</td>
+   <td>{+$p[i].auto+}</td>
+   <td>{+$p[i].time+}</td>
+   <td>{+$p[i].sonuser+}</td>
+   <td><input type="button" class="delone btn1 btnf" value='删除' /></td>
+  </TR>
+  {+/section+}
+ </table>
+</div>
+<script language="javascript">
+	var page = 'adminpeilv';
+	</script>
+<div id='test'></div>
+</body>
+</html>

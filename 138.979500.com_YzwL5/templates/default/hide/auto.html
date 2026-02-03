@@ -1,0 +1,92 @@
+{+include file='header2.html'+}
+<style type="text/css">
+.data_table .flag{width:70px;}
+.data_table td{height:30px;}
+.pantb td{text-align:center}
+input.s1{padding:1.5px;}
+</style>
+</head>
+<body id="topbody">
+<script id=myjs language="javascript">var mulu='{+$mulu+}';
+var js=1;var sss='auto';
+</script>
+
+
+<div class="main">
+	<div class="top_info">
+		<span class="title">自动降下倍设定</span><span class="right"></span>
+	</div>
+    	
+		<div class="contents param_panel">
+			<div class="game_class">
+				<ul>
+{+if $config.fasttype==1+}
+<li><span>快开彩</span>
+{+section name=i loop=$game+}
+    {+if $game[i].fast==1+}<a href="javascript:void(0)" class="g{+$game[i].gid+}"  gid='{+$game[i].gid+}'>{+$game[i].gname+}</a>{+/if+}
+ {+/section+}
+</li>
+{+/if+}
+{+if $config.slowtype==1+}
+<li><span>低频彩</span>
+{+section name=i loop=$game+}
+    {+if $game[i].fast==0+}<a href="javascript:void(0)" class="g{+$game[i].gid+}" gid='{+$game[i].gid+}'>{+$game[i].gname+}</a>{+/if+}
+ {+/section+}
+</li>
+{+/if+}
+				</ul>
+			</div>
+            
+ <table class="list data_table pantb">
+ <thead>
+  <TR>
+  <th class="wd120"><input type="checkbox"  class="all" />全选</th>
+   <th class="wd120">类别</th>
+   <th>开关</th>
+   <th>预降</th>
+   <th>计算方法</th>
+   <th>开始下调金额-下调赔率</th>
+   <th>金额变动值-下调赔率</th>
+   <th>开始下调期数-下调赔率[限快开]</th>
+   <th style="display:none">停止下注金额</th>
+   <th>最低赔率</th>
+  </TR>
+  </thead>
+  {+section name=i loop=$auto+}
+  <tr f='{+$auto[i].ftype+}' class="nr">
+  <td><input type="checkbox"  /><input type="button" class="s1 pantb" value="同步选中" /></td>
+   <th >{+$auto[i].name+}</th>
+   <td><input type="checkbox" class="ifok" {+if $auto[i].ifok==1+}checked{+/if+} /></td>
+   <td><input type="checkbox" class="yj" {+if $auto[i].yj==1+}checked{+/if+} /></td>
+   <td><select class='ifzc'>
+     <option {+if $auto[i].ifzc==0+}selected{+/if+} value="0">全部</option>
+     <option {+if $auto[i].ifzc==1+}selected{+/if+}  value="1">占成</option>
+    </select></td>
+   <td><input type="text" class="flag startje"  value="{+$auto[i].startje+}" />
+    -
+    <input type="text" class="flag startpeilv"  value="{+$auto[i].startpeilv+}" /></td>
+   <td><input type="text" class="flag addje"  value="{+$auto[i].addje+}" />
+    -
+    <input type="text" class="flag attpeilv"  value="{+$auto[i].attpeilv+}" /></td>
+   <td><input type="text" class="flag qsnum"  value="{+$auto[i].qsnum+}" />
+    -
+    <input type="text" class="flag qspeilv"  value="{+$auto[i].qspeilv+}" /></td>
+   <td  style="display:none"><input type="text" class="flag stopje"  value="{+$auto[i].stopje+}" /></td>
+   <td><input type="text" class="flag lowpeilv"  value="{+$auto[i].lowpeilv+}" /></td>
+  </tr>
+  {+/section+}
+ </table>
+ 
+
+		
+</div>
+      <div class="control">
+			<input type="button" gid="{+$gid+}" class="button yiwotongbu" value="同步{+$flname+}">&nbsp;&nbsp;&nbsp;<input type="button" value="保存" class="button send"><input type="button" value="取消" class="button" style="display:none">
+		</div>
+</div>
+<script language="javascript">
+var gid={+$gid+};
+</script>
+<div id='test'></div>
+</body>
+</html>
