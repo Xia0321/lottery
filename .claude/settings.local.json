@@ -23,7 +23,8 @@
       "Bash(git push:*)",
       "Bash(if [ -f \"D:/lottery/web/class/plugins/function.accign_debug_infb.php\" ])",
       "Bash(then rm \"D:/lottery/web/class/plugins/function.accign_debug_infb.php\")",
-      "Bash(else echo \"⚠️ 文件不存在\")"
+      "Bash(else echo \"⚠️ 文件不存在\")",
+      "Bash(git commit:*)"
     ]
   }
 }
