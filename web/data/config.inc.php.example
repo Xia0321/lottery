@@ -1,0 +1,110 @@
+<?php
+/**
+ * 数据库配置文件示例
+ *
+ * 使用说明：
+ * 1. 复制此文件为 config.inc.php
+ * 2. 修改数据库连接信息
+ * 3. 配置 Redis 连接（可选）
+ */
+
+// ==================== 数据库配置 ====================
+
+// 数据库主机
+define('DB_HOST', '127.0.0.1');
+
+// 数据库端口
+define('DB_PORT', 3306);
+
+// 数据库用户名
+define('DB_USER', 'root');
+
+// 数据库密码
+define('DB_PASS', '123456');
+
+// 数据库名称
+define('DB_NAME', 'lottery_db');
+
+// 数据库字符集
+define('DB_CHARSET', 'utf8mb4');
+
+// ==================== Redis 配置 (可选) ====================
+
+// Redis 主机
+define('REDIS_HOST', '127.0.0.1');
+
+// Redis 端口
+define('REDIS_PORT', 6379);
+
+// Redis 密码 (如果有)
+define('REDIS_PASS', '');
+
+// Redis 数据库索引
+define('REDIS_DB', 0);
+
+// ==================== 应用配置 ====================
+
+// 网站域名
+define('SITE_URL', 'http://localhost');
+
+// API 基础路径
+define('API_BASE_PATH', '/api/v1');
+
+// 日志目录
+define('LOG_DIR', __DIR__ . '/../logs');
+
+// 调试模式 (生产环境设为 false)
+define('DEBUG_MODE', true);
+
+// 时区设置
+date_default_timezone_set('Asia/Shanghai');
+
+// ==================== 安全配置 ====================
+
+// API 签名有效期 (秒)
+define('API_SIGNATURE_TTL', 300);
+
+// API 请求频率限制 (每分钟)
+define('API_RATE_LIMIT', 100);
+
+// 缓存 TTL (秒)
+define('CACHE_TTL', 60);
+
+// Session 超时时间 (秒)
+define('SESSION_TIMEOUT', 7200);
+
+// ==================== 业务配置 ====================
+
+// 单笔充值上限
+define('MAX_DEPOSIT_AMOUNT', 100000);
+
+// 单笔提现上限
+define('MAX_WITHDRAWAL_AMOUNT', 100000);
+
+// 最小充值金额
+define('MIN_DEPOSIT_AMOUNT', 10);
+
+// 最小提现金额
+define('MIN_WITHDRAWAL_AMOUNT', 10);
+
+// ==================== 监控配置 ====================
+
+// Prometheus 指标端点密钥 (生产环境必须修改)
+define('METRICS_KEY', 'change_me_in_production');
+
+// ==================== 其他配置 ====================
+
+// 错误报告级别
+if (DEBUG_MODE) {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+} else {
+    error_reporting(0);
+    ini_set('display_errors', 0);
+}
+
+// 设置内存限制
+ini_set('memory_limit', '256M');
+
+// 设置执行时间限制
+ini_set('max_execution_time', 300);

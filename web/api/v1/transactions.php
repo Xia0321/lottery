@@ -53,9 +53,9 @@ class TransactionsController extends BaseController {
             $params = [];
             $types = '';
 
-            // 数据隔离：只能查询本代理下的用户交易
+            // 数据隔离
             if ($this->agentId !== null) {
-                $where[] = "t.userid IN (SELECT userid FROM `$tb_user` WHERE fid = ?)";
+                $where[] = "u.fid = ?";
                 $params[] = $this->agentId;
                 $types .= 'i';
             }
@@ -76,13 +76,13 @@ class TransactionsController extends BaseController {
 
             // 日期范围过滤
             if ($startDate !== null) {
-                $where[] = "t.created_at >= ?";
+                $where[] = "t.time >= ?";
                 $params[] = $startDate;
                 $types .= 's';
             }
 
             if ($endDate !== null) {
-                $where[] = "t.created_at <= ?";
+                $where[] = "t.time <= ?";
                 $params[] = $endDate;
                 $types .= 's';
             }
@@ -93,6 +93,7 @@ class TransactionsController extends BaseController {
             $countSql = "
                 SELECT COUNT(*) as total
                 FROM `$tb_money_log` t
+                LEFT JOIN `$tb_user` u ON t.userid = u.userid
                 WHERE $whereClause
             ";
             $countStmt = $this->mysqli->prepare($countSql);
@@ -106,14 +107,14 @@ class TransactionsController extends BaseController {
             $total = $countResult->fetch_assoc()['total'];
             $countStmt->close();
 
-            // 查询列表数据
+            // 查询列表数据（适配 x_money_log 实际列名）
             $sql = "
-                SELECT t.id, t.userid, u.username, t.money, t.before_money, t.after_money,
-                       t.type, t.remark, t.created_at
+                SELECT t.id, t.userid, u.username, t.money, t.usermoney,
+                       t.type, t.bz, t.time
                 FROM `$tb_money_log` t
                 LEFT JOIN `$tb_user` u ON t.userid = u.userid
                 WHERE $whereClause
-                ORDER BY t.created_at DESC
+                ORDER BY t.time DESC
                 LIMIT ? OFFSET ?
             ";
 
@@ -138,11 +139,10 @@ class TransactionsController extends BaseController {
                     'user_id' => (int)$row['userid'],
                     'username' => $row['username'],
                     'amount' => floatval($row['money']),
-                    'balance_before' => floatval($row['before_money']),
-                    'balance_after' => floatval($row['after_money']),
+                    'balance' => floatval($row['usermoney']),
                     'type' => $row['type'],
-                    'remark' => $row['remark'],
-                    'created_at' => $row['created_at']
+                    'remark' => $row['bz'],
+                    'created_at' => $row['time']
                 ];
             }
             $stmt->close();
@@ -176,10 +176,10 @@ class TransactionsController extends BaseController {
             // 获取表名
             global $tb_money_log, $tb_user;
 
-            // 构建查询
+            // 构建查询（适配 x_money_log 实际列名）
             $sql = "
-                SELECT t.id, t.userid, u.username, t.money, t.before_money, t.after_money,
-                       t.type, t.remark, t.created_at
+                SELECT t.id, t.userid, u.username, t.money, t.usermoney,
+                       t.type, t.bz, t.time
                 FROM `$tb_money_log` t
                 LEFT JOIN `$tb_user` u ON t.userid = u.userid
                 WHERE t.id = ?
@@ -188,9 +188,9 @@ class TransactionsController extends BaseController {
             $params = [$transactionId];
             $types = 'i';
 
-            // 数据隔离：只能查询本代理下的用户交易
+            // 数据隔离
             if ($this->agentId !== null) {
-                $sql .= " AND t.userid IN (SELECT userid FROM `$tb_user` WHERE fid = ?)";
+                $sql .= " AND u.fid = ?";
                 $params[] = $this->agentId;
                 $types .= 'i';
             }
@@ -216,11 +216,10 @@ class TransactionsController extends BaseController {
                 'user_id' => (int)$transaction['userid'],
                 'username' => $transaction['username'],
                 'amount' => floatval($transaction['money']),
-                'balance_before' => floatval($transaction['before_money']),
-                'balance_after' => floatval($transaction['after_money']),
+                'balance' => floatval($transaction['usermoney']),
                 'type' => $transaction['type'],
-                'remark' => $transaction['remark'],
-                'created_at' => $transaction['created_at']
+                'remark' => $transaction['bz'],
+                'created_at' => $transaction['time']
             ];
 
             $this->respondSuccess($data);

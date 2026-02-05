@@ -71,11 +71,16 @@ class lib_mysqli {
         return $res;  
     }  
   
-    //获取查询次数  
-    public function query_num() {  
-        return $this->query_num;  
-    }  
-  
+    //获取查询次数
+    public function query_num() {
+        return $this->query_num;
+    }
+
+    //获取 mysqli 对象 (用于 API)
+    public function get_mysqli() {
+        return $this->mysqli;
+    }
+
     //执行sql语句查询  
     public function query($sql, $limit = null) {  
         $sql    = $this->get_query_sql($sql, $limit);  

@@ -1,0 +1,196 @@
+{+include file='header2.html'+}
+<style>
+.info-table { width: 600px; border-collapse: collapse; margin-bottom: 15px; }
+.info-table td, .info-table th { padding: 8px 12px; border: 1px solid #ddd; text-align: left; }
+.info-table th { background: #f5f5f5; width: 150px; }
+.status-on { color: #27ae60; font-weight: bold; }
+.status-off { color: #e74c3c; font-weight: bold; }
+.mono { font-family: monospace; font-size: 13px; word-break: break-all; }
+.secret-box { position: relative; }
+.secret-mask { cursor: pointer; color: #999; }
+.stat-box { display: inline-block; padding: 10px 20px; margin: 5px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px; text-align: center; }
+.stat-box .num { font-size: 24px; font-weight: bold; color: #333; }
+.stat-box .label { font-size: 12px; color: #999; }
+.stat-box.error .num { color: #e74c3c; }
+.btn-back { background: #95a5a6; color: #fff; border: none; padding: 5px 15px; cursor: pointer; border-radius: 3px; }
+.btn-back:hover { background: #7f8c8d; }
+.btn-save { background: #3498db; color: #fff; border: none; padding: 5px 12px; cursor: pointer; border-radius: 3px; }
+.log-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.log-table td, .log-table th { padding: 5px 8px; border: 1px solid #ddd; }
+.log-table th { background: #f5f5f5; }
+.code-ok { color: #27ae60; }
+.code-err { color: #e74c3c; }
+</style>
+</head>
+<body>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='apikeys_detail';</script>
+<div class="main">
+    <div class="top_info">
+        <span class="title">API Key 详情</span>
+        <span class="right">
+            <button class="btn-back" onclick="location.href='apikeys.php?xtype=list'">返回列表</button>
+        </span>
+    </div>
+
+    <!-- 统计 -->
+    <div style="margin: 10px 0;">
+        <div class="stat-box">
+            <div class="num">{+$detail.call_count_7d+}</div>
+            <div class="label">7天调用次数</div>
+        </div>
+        <div class="stat-box error">
+            <div class="num">{+$detail.error_count_7d+}</div>
+            <div class="label">7天错误次数</div>
+        </div>
+    </div>
+
+    <!-- 基本信息 -->
+    <h3 style="margin: 15px 0 8px;">基本信息</h3>
+    <table class="info-table">
+        <tr>
+            <th>ID</th>
+            <td>{+$detail.id+}</td>
+        </tr>
+        <tr>
+            <th>合作伙伴</th>
+            <td>{+$detail.partner_name+}</td>
+        </tr>
+        <tr>
+            <th>API Key</th>
+            <td class="mono">{+$detail.api_key+}</td>
+        </tr>
+        <tr>
+            <th>API Secret</th>
+            <td class="secret-box">
+                <span class="mono secret-mask" id="secretMask" onclick="toggleSecret()">****** 点击显示 ******</span>
+                <span class="mono" id="secretValue" style="display:none;">{+$detail.api_secret+}</span>
+            </td>
+        </tr>
+        <tr>
+            <th>关联代理 ID</th>
+            <td>{+$detail.agent_id+}</td>
+        </tr>
+        <tr>
+            <th>状态</th>
+            <td>
+                {+if $detail.status == 1+}
+                <span class="status-on">启用</span>
+                {+else+}
+                <span class="status-off">禁用</span>
+                {+/if+}
+            </td>
+        </tr>
+        <tr>
+            <th>速率限制</th>
+            <td>
+                <input type="number" id="rateLimit" value="{+$detail.rate_limit+}" style="width:80px; padding:3px;" min="1" max="10000" /> 次/分钟
+                <button class="btn-save" onclick="updateLimit({+$detail.id+})">保存</button>
+            </td>
+        </tr>
+        <tr>
+            <th>IP 白名单</th>
+            <td>
+                <textarea id="allowedIps" rows="3" style="width:300px; padding:3px; font-family:monospace; font-size:12px;" placeholder="每行一个 IP 或 CIDR，如 192.168.1.0/24">{+$detail.allowed_ips+}</textarea><br/>
+                <button class="btn-save" onclick="updateIPs({+$detail.id+})">保存</button>
+                <span style="color:#999; font-size:11px; margin-left:5px;">留空 = 不限制</span>
+            </td>
+        </tr>
+        <tr>
+            <th>权限范围 (Scopes)</th>
+            <td>
+                <textarea id="scopes" rows="3" style="width:300px; padding:3px; font-family:monospace; font-size:12px;" placeholder="如 bets.read,users.read，留空=全部权限">{+$detail.scopes+}</textarea><br/>
+                <button class="btn-save" onclick="updateScopes({+$detail.id+})">保存</button>
+                <span style="color:#999; font-size:11px; margin-left:5px;">可选: bets.read, bets.write, users.read, users.write, transactions.read, deposits.*, withdrawals.*, lottery_results.read, webhooks.*, embed.token</span>
+            </td>
+        </tr>
+        <tr>
+            <th>过期时间</th>
+            <td>{+$detail.expires_at+}</td>
+        </tr>
+        <tr>
+            <th>最后使用时间</th>
+            <td>{+$detail.last_used_at+}</td>
+        </tr>
+        <tr>
+            <th>创建时间</th>
+            <td>{+$detail.created_at+}</td>
+        </tr>
+    </table>
+
+    <!-- 最近调用日志 -->
+    <h3 style="margin: 15px 0 8px;">最近调用日志（最近10条）</h3>
+    <table class="log-table">
+        <tr>
+            <th>接口</th>
+            <th>方法</th>
+            <th>状态码</th>
+            <th>IP</th>
+            <th>耗时(ms)</th>
+            <th>时间</th>
+        </tr>
+        {+section name=j loop=$logs+}
+        <tr>
+            <td>{+$logs[j].endpoint+}</td>
+            <td>{+$logs[j].method+}</td>
+            <td>
+                {+if $logs[j].response_code < 400+}
+                <span class="code-ok">{+$logs[j].response_code+}</span>
+                {+else+}
+                <span class="code-err">{+$logs[j].response_code+}</span>
+                {+/if+}
+            </td>
+            <td>{+$logs[j].ip_address+}</td>
+            <td>{+$logs[j].execution_time+}</td>
+            <td>{+$logs[j].created_at+}</td>
+        </tr>
+        {+sectionelse+}
+        <tr>
+            <td colspan="6" style="text-align: center; color: #999; padding: 15px;">暂无调用记录</td>
+        </tr>
+        {+/section+}
+    </table>
+</div>
+
+<script>
+function toggleSecret() {
+    var mask = document.getElementById('secretMask');
+    var value = document.getElementById('secretValue');
+    if (value.style.display === 'none') {
+        value.style.display = 'inline';
+        mask.style.display = 'none';
+    } else {
+        value.style.display = 'none';
+        mask.style.display = 'inline';
+    }
+}
+
+function updateLimit(id) {
+    var limit = $('#rateLimit').val();
+    if (limit < 1 || limit > 10000) {
+        alert('速率限制范围: 1-10000');
+        return;
+    }
+    $.post('apikeys.php?xtype=updatelimit', { id: id, rate_limit: limit }, function(res) {
+        var r = typeof res === 'string' ? JSON.parse(res) : res;
+        alert(r.msg);
+    });
+}
+
+function updateIPs(id) {
+    var ips = $('#allowedIps').val().trim();
+    $.post('apikeys.php?xtype=updateips', { id: id, allowed_ips: ips }, function(res) {
+        var r = typeof res === 'string' ? JSON.parse(res) : res;
+        alert(r.msg);
+    });
+}
+
+function updateScopes(id) {
+    var scopes = $('#scopes').val().trim();
+    $.post('apikeys.php?xtype=updatescopes', { id: id, scopes: scopes }, function(res) {
+        var r = typeof res === 'string' ? JSON.parse(res) : res;
+        alert(r.msg);
+    });
+}
+</script>
+</body>
+</html>

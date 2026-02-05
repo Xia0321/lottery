@@ -221,9 +221,10 @@ class WebhookManager {
      * @param string $eventType 事件类型
      * @param array $eventData 事件数据
      * @param int $apiKeyId API Key ID (可选，为空则发送给所有订阅者)
+     * @param bool $async 是否异步发送（入队列）
      * @return int 触发的 Webhook 数量
      */
-    public function trigger($eventType, $eventData, $apiKeyId = null) {
+    public function trigger($eventType, $eventData, $apiKeyId = null, $async = false) {
         // 查找订阅该事件的 Webhook
         if ($apiKeyId) {
             $stmt = $this->mysqli->prepare("
@@ -244,13 +245,237 @@ class WebhookManager {
 
         $count = 0;
         while ($webhook = $result->fetch_assoc()) {
-            $this->send($webhook, $eventData);
+            if ($async) {
+                $this->enqueue($webhook, $eventData);
+            } else {
+                $this->send($webhook, $eventData);
+            }
             $count++;
         }
 
         $stmt->close();
 
         return $count;
+    }
+
+    /**
+     * 将 Webhook 请求加入异步队列
+     * @param array $webhook Webhook 配置
+     * @param array $eventData 事件数据
+     * @return bool
+     */
+    public function enqueue($webhook, $eventData) {
+        $payload = json_encode([
+            'event' => $webhook['event_type'],
+            'data' => $eventData,
+            'timestamp' => time(),
+            'webhook_id' => $webhook['id']
+        ], JSON_UNESCAPED_UNICODE);
+
+        $maxAttempts = ($webhook['retry_times'] ?? 1) + 1;
+
+        $stmt = $this->mysqli->prepare("
+            INSERT INTO webhook_queue (webhook_id, event_type, payload, status, max_attempts, created_at)
+            VALUES (?, ?, ?, 0, ?, NOW())
+        ");
+        $stmt->bind_param("issi", $webhook['id'], $webhook['event_type'], $payload, $maxAttempts);
+        $result = $stmt->execute();
+        $stmt->close();
+
+        return $result;
+    }
+
+    /**
+     * 从队列中获取待处理的任务（带行级锁）
+     * @param int $limit 一次取多少条
+     * @param int $lockTimeout 锁定超时秒数（超时后自动释放）
+     * @return array
+     */
+    public function dequeue($limit = 10, $lockTimeout = 300) {
+        // 先释放超时锁定的任务
+        $this->releaseTimedOut($lockTimeout);
+
+        // 获取待处理和待重试的任务
+        $stmt = $this->mysqli->prepare("
+            SELECT q.*, w.callback_url, w.secret, w.timeout AS webhook_timeout
+            FROM webhook_queue q
+            INNER JOIN webhooks w ON q.webhook_id = w.id
+            WHERE q.status IN (0, 3)
+              AND (q.next_retry_at IS NULL OR q.next_retry_at <= NOW())
+              AND q.attempts < q.max_attempts
+            ORDER BY q.created_at ASC
+            LIMIT ?
+        ");
+        $stmt->bind_param("i", $limit);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $jobs = [];
+        while ($row = $result->fetch_assoc()) {
+            $jobs[] = $row;
+        }
+        $stmt->close();
+
+        // 锁定这些任务
+        foreach ($jobs as $job) {
+            $stmt = $this->mysqli->prepare("
+                UPDATE webhook_queue SET status = 1, locked_at = NOW() WHERE id = ? AND status IN (0, 3)
+            ");
+            $stmt->bind_param("i", $job['id']);
+            $stmt->execute();
+            $stmt->close();
+        }
+
+        return $jobs;
+    }
+
+    /**
+     * 释放超时锁定的队列任务
+     * @param int $lockTimeout 超时秒数
+     */
+    private function releaseTimedOut($lockTimeout) {
+        $stmt = $this->mysqli->prepare("
+            UPDATE webhook_queue
+            SET status = 3, locked_at = NULL, error_message = 'Lock timeout'
+            WHERE status = 1 AND locked_at < DATE_SUB(NOW(), INTERVAL ? SECOND)
+        ");
+        $stmt->bind_param("i", $lockTimeout);
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    /**
+     * 处理单个队列任务
+     * @param array $job 队列任务行（包含 webhook 信息）
+     * @return bool
+     */
+    public function processJob($job) {
+        $webhookId = $job['webhook_id'];
+        $callbackUrl = $job['callback_url'];
+        $secret = $job['secret'];
+        $timeout = $job['webhook_timeout'] ?? 5;
+        $jsonPayload = $job['payload'];
+
+        // 生成签名
+        $signature = hash_hmac('sha256', $jsonPayload, $secret);
+
+        $headers = [
+            'Content-Type: application/json',
+            'X-Webhook-Signature: ' . $signature,
+            'X-Webhook-Event: ' . $job['event_type'],
+            'User-Agent: LotteryAPI-Webhook/1.0'
+        ];
+
+        $startTime = microtime(true);
+
+        $ch = curl_init($callbackUrl);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonPayload);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+
+        $responseBody = curl_exec($ch);
+        $responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $executionTime = (int)((microtime(true) - $startTime) * 1000);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        $success = !$error && $responseCode >= 200 && $responseCode < 300;
+        $errorMessage = $error ?: ($success ? null : "HTTP $responseCode");
+        $attempts = $job['attempts'] + 1;
+
+        if ($success) {
+            // 标记完成
+            $stmt = $this->mysqli->prepare("
+                UPDATE webhook_queue SET status = 2, attempts = ?, completed_at = NOW(), locked_at = NULL, error_message = NULL
+                WHERE id = ?
+            ");
+            $stmt->bind_param("ii", $attempts, $job['id']);
+            $stmt->execute();
+            $stmt->close();
+
+            // 更新 Webhook 最后触发时间
+            $stmt = $this->mysqli->prepare("UPDATE webhooks SET last_triggered_at = NOW() WHERE id = ?");
+            $stmt->bind_param("i", $webhookId);
+            $stmt->execute();
+            $stmt->close();
+        } else {
+            // 计算下次重试时间（指数退避: 30s, 120s, 480s...）
+            $delay = 30 * pow(4, $attempts - 1);
+            if ($attempts >= $job['max_attempts']) {
+                // 达到最大重试次数，标记永久失败
+                $stmt = $this->mysqli->prepare("
+                    UPDATE webhook_queue SET status = 3, attempts = ?, locked_at = NULL, error_message = ?
+                    WHERE id = ?
+                ");
+                $stmt->bind_param("isi", $attempts, $errorMessage, $job['id']);
+            } else {
+                // 设置下次重试
+                $stmt = $this->mysqli->prepare("
+                    UPDATE webhook_queue SET status = 0, attempts = ?, locked_at = NULL,
+                    next_retry_at = DATE_ADD(NOW(), INTERVAL ? SECOND), error_message = ?
+                    WHERE id = ?
+                ");
+                $stmt->bind_param("iisi", $attempts, $delay, $errorMessage, $job['id']);
+            }
+            $stmt->execute();
+            $stmt->close();
+        }
+
+        // 记录日志
+        $this->logWebhook(
+            $webhookId,
+            $job['event_type'],
+            $jsonPayload,
+            $callbackUrl,
+            $headers,
+            $responseCode,
+            $responseBody,
+            $attempts - 1,
+            $success ? 'success' : 'failed',
+            $errorMessage,
+            $executionTime
+        );
+
+        return $success;
+    }
+
+    /**
+     * 清理已完成和过期的队列记录
+     * @param int $days 保留天数
+     * @return int 清理的记录数
+     */
+    public function cleanupQueue($days = 7) {
+        $stmt = $this->mysqli->prepare("
+            DELETE FROM webhook_queue
+            WHERE (status = 2 OR (status = 3 AND attempts >= max_attempts))
+              AND created_at < DATE_SUB(NOW(), INTERVAL ? DAY)
+        ");
+        $stmt->bind_param("i", $days);
+        $stmt->execute();
+        $affected = $stmt->affected_rows;
+        $stmt->close();
+        return $affected;
+    }
+
+    /**
+     * 获取队列状态统计
+     * @return array
+     */
+    public function getQueueStats() {
+        $result = $this->mysqli->query("
+            SELECT
+                COUNT(*) as total,
+                SUM(status = 0) as pending,
+                SUM(status = 1) as processing,
+                SUM(status = 2) as completed,
+                SUM(status = 3 AND attempts >= max_attempts) as failed,
+                SUM(status = 3 AND attempts < max_attempts) as retrying
+            FROM webhook_queue
+        ");
+        return $result->fetch_assoc();
     }
 
     /**

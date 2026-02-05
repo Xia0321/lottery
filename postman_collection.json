@@ -1,0 +1,433 @@
+{
+    "info": {
+        "name": "彩票系统 API",
+        "description": "彩票系统外部 API 接口集合\n\n认证方式：API Key + HMAC-SHA256 签名\n\n使用前请在 Variables 中设置 api_key 和 api_secret",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://localhost/api/v1",
+            "type": "string"
+        },
+        {
+            "key": "api_key",
+            "value": "your_api_key_here",
+            "type": "string"
+        },
+        {
+            "key": "api_secret",
+            "value": "your_api_secret_here",
+            "type": "string"
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// 自动生成签名",
+                    "var apiKey = pm.collectionVariables.get('api_key');",
+                    "var apiSecret = pm.collectionVariables.get('api_secret');",
+                    "var timestamp = Math.floor(Date.now() / 1000).toString();",
+                    "",
+                    "var signString = apiKey + timestamp + apiSecret;",
+                    "var sign = CryptoJS.HmacSHA256(signString, apiSecret).toString();",
+                    "",
+                    "pm.collectionVariables.set('timestamp', timestamp);",
+                    "pm.collectionVariables.set('sign', sign);"
+                ]
+            }
+        }
+    ],
+    "item": [
+        {
+            "name": "开奖结果",
+            "item": [
+                {
+                    "name": "查询最新开奖结果",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/lottery_results/latest?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["lottery_results", "latest"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"}
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "查询最新开奖结果（指定游戏）",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/lottery_results/latest?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}&game_id=1",
+                            "host": ["{{base_url}}"],
+                            "path": ["lottery_results", "latest"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"},
+                                {"key": "game_id", "value": "1"}
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "查询历史开奖列表",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/lottery_results?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}&page=1&page_size=10",
+                            "host": ["{{base_url}}"],
+                            "path": ["lottery_results"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"},
+                                {"key": "page", "value": "1"},
+                                {"key": "page_size", "value": "10"}
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "投注记录",
+            "item": [
+                {
+                    "name": "查询投注列表",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/bets?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}&page=1&page_size=10",
+                            "host": ["{{base_url}}"],
+                            "path": ["bets"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"},
+                                {"key": "page", "value": "1"},
+                                {"key": "page_size", "value": "10"}
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "查询投注详情",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/bets/1?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["bets", "1"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"}
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "创建投注",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": 1,\n    \"game_id\": 1,\n    \"period\": \"20250203001\",\n    \"bet_content\": \"大\",\n    \"bet_amount\": 100\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/bets?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["bets"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"}
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "交易记录",
+            "item": [
+                {
+                    "name": "查询交易列表",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/transactions?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}&page=1&page_size=10",
+                            "host": ["{{base_url}}"],
+                            "path": ["transactions"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"},
+                                {"key": "page", "value": "1"},
+                                {"key": "page_size", "value": "10"}
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "查询交易详情",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/transactions/1?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["transactions", "1"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"}
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "充值",
+            "item": [
+                {
+                    "name": "查询充值列表",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/deposits?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}&page=1&page_size=10",
+                            "host": ["{{base_url}}"],
+                            "path": ["deposits"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"},
+                                {"key": "page", "value": "1"},
+                                {"key": "page_size", "value": "10"}
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "创建充值",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": 1,\n    \"amount\": 500.00,\n    \"remark\": \"充值\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/deposits?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["deposits"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"}
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "提现",
+            "item": [
+                {
+                    "name": "查询提现列表",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/withdrawals?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}&page=1&page_size=10",
+                            "host": ["{{base_url}}"],
+                            "path": ["withdrawals"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"},
+                                {"key": "page", "value": "1"},
+                                {"key": "page_size", "value": "10"}
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "创建提现",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": 1,\n    \"amount\": 200.00,\n    \"remark\": \"提现\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/withdrawals?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["withdrawals"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"}
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "用户",
+            "item": [
+                {
+                    "name": "查询用户信息",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users/1?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["users", "1"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"}
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "查询用户余额",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/users/1/balance?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["users", "1", "balance"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"}
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Webhook",
+            "item": [
+                {
+                    "name": "创建 Webhook",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"event_type\": \"bet.created\",\n    \"callback_url\": \"https://your-domain.com/webhook\",\n    \"description\": \"投注通知\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/webhooks?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["webhooks"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"}
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "查询 Webhook 列表",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/webhooks?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["webhooks"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"}
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "删除 Webhook",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/webhooks/1?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["webhooks", "1"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"}
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "游戏嵌入",
+            "item": [
+                {
+                    "name": "生成嵌入 Token",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"user_id\": 1\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/embed-token?api_key={{api_key}}&timestamp={{timestamp}}&sign={{sign}}",
+                            "host": ["{{base_url}}"],
+                            "path": ["embed-token"],
+                            "query": [
+                                {"key": "api_key", "value": "{{api_key}}"},
+                                {"key": "timestamp", "value": "{{timestamp}}"},
+                                {"key": "sign", "value": "{{sign}}"}
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

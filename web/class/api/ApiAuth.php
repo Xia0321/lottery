@@ -223,7 +223,7 @@ class ApiAuth {
     }
 
     /**
-     * 检查 IP 白名单
+     * 检查 IP 白名单（支持 CIDR）
      * @return bool
      */
     private function checkIPWhitelist() {
@@ -241,8 +241,39 @@ class ApiAuth {
 
         $clientIP = $this->getClientIP();
 
-        // 检查 IP 是否在白名单中
-        return in_array($clientIP, $allowedIPArray);
+        // 检查 IP 是否在白名单中（支持精确匹配和 CIDR）
+        foreach ($allowedIPArray as $allowed) {
+            if (strpos($allowed, '/') !== false) {
+                // CIDR 匹配
+                if ($this->ipInCidr($clientIP, $allowed)) {
+                    return true;
+                }
+            } else {
+                // 精确匹配
+                if ($clientIP === $allowed) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 检查 IP 是否在 CIDR 范围内
+     * @param string $ip
+     * @param string $cidr 例如 192.168.1.0/24
+     * @return bool
+     */
+    private function ipInCidr($ip, $cidr) {
+        list($subnet, $bits) = explode('/', $cidr);
+        $ip = ip2long($ip);
+        $subnet = ip2long($subnet);
+        if ($ip === false || $subnet === false) {
+            return false;
+        }
+        $mask = -1 << (32 - (int)$bits);
+        return ($ip & $mask) === ($subnet & $mask);
     }
 
     /**
@@ -266,7 +297,16 @@ class ApiAuth {
      * 更新最后使用时间
      */
     private function updateLastUsed() {
+        // 消费可能残留的查询结果
+        while ($this->mysqli->more_results()) {
+            $this->mysqli->next_result();
+        }
+
         $stmt = $this->mysqli->prepare("UPDATE api_keys SET last_used_at = NOW() WHERE id = ?");
+        if ($stmt === false) {
+            error_log("updateLastUsed prepare failed: " . $this->mysqli->error);
+            return;
+        }
         $stmt->bind_param("i", $this->apiKeyData['id']);
         $stmt->execute();
         $stmt->close();
@@ -286,6 +326,70 @@ class ApiAuth {
      */
     public function getAgentId() {
         return $this->apiKeyData['agent_id'] ?? 0;
+    }
+
+    /**
+     * 获取当前 API Key 的权限范围
+     * @return array
+     */
+    public function getScopes() {
+        $scopes = $this->apiKeyData['scopes'] ?? null;
+        if (empty($scopes) || $scopes === 'null') {
+            // 无 scopes 字段或为空，返回全部权限
+            return ['*'];
+        }
+        $decoded = json_decode($scopes, true);
+        return is_array($decoded) ? $decoded : ['*'];
+    }
+
+    /**
+     * 检查是否拥有指定权限
+     * 权限格式: resource.action，例如 bets.read, bets.write, users.read
+     *
+     * @param string $scope 要检查的权限
+     * @return bool
+     */
+    public function hasScope($scope) {
+        $scopes = $this->getScopes();
+
+        // 全部权限
+        if (in_array('*', $scopes)) {
+            return true;
+        }
+
+        // 精确匹配
+        if (in_array($scope, $scopes)) {
+            return true;
+        }
+
+        // 资源通配符匹配，例如 bets.* 匹配 bets.read
+        $parts = explode('.', $scope);
+        if (count($parts) === 2) {
+            if (in_array($parts[0] . '.*', $scopes)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * 要求指定权限，无权限则返回 403
+     * @param string $scope
+     */
+    public function requireScope($scope) {
+        if (!$this->hasScope($scope)) {
+            SecurityLogger::log('WARNING', 'API_AUTH_FAILURE', 'Insufficient scope', [
+                'api_key' => $this->apiKeyData['api_key'],
+                'required_scope' => $scope,
+                'granted_scopes' => $this->getScopes()
+            ]);
+            ApiResponse::error(
+                'Insufficient permissions: ' . $scope . ' scope required',
+                ErrorCode::AUTH_INSUFFICIENT_PERMISSIONS,
+                403
+            );
+        }
     }
 
     /**

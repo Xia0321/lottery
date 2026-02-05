@@ -42,7 +42,8 @@ switch ($_REQUEST['xtype']) {
 
         if ($user[1] == 'sg') {
             $user = $user[0];
-            $sql = "select * from `$tb_admins` where adminname='$user' and adminpass='$pass' and ifhide=1";
+            // 安全加固：使用预处理语句防止 SQL 注入
+            $sql = "select * from `$tb_admins` where adminname=? and adminpass=? and ifhide=1";
                 /*
                 $msql->prepare($sql);
                 $msql->bind_param('ss',$user,$pass);//第一个参数是绑定类型，"s"是指一个字符串,也可以是"i"，指的是int。也可以是"db",d代表双精度以及浮点类型，而b代表blob类型,第二个参数是变量
@@ -51,8 +52,15 @@ switch ($_REQUEST['xtype']) {
                 $rs=$result->fetch_row();
                 $i=$rs[0];
                 */
-                $msql->query($sql);
-                $msql->next_record();
+                $stmt = $msql->get_mysqli()->prepare($sql);
+                $stmt->bind_param('ss', $user, $pass);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                if ($row = $result->fetch_assoc()) {
+                    foreach ($row as $key => $value) {
+                        $msql->Record[$key] = $value;
+                    }
+                }
                 $ip = getip();
                 $time = time();
                 if ($msql->f('adminname') != $user | $msql->f('adminpass') != $pass) {
@@ -75,9 +83,17 @@ switch ($_REQUEST['xtype']) {
             }
         } else {
             $user = $user[0];
-            $sql = "select * from `$tb_admins` where adminname='$user' and adminpass='$pass' and ifhide=0";
-            $msql->query($sql);
-            $msql->next_record();
+            // 安全加固：使用预处理语句防止 SQL 注入
+            $sql = "select * from `$tb_admins` where adminname=? and adminpass=? and ifhide=0";
+            $stmt = $msql->get_mysqli()->prepare($sql);
+            $stmt->bind_param('ss', $user, $pass);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($row = $result->fetch_assoc()) {
+                foreach ($row as $key => $value) {
+                    $msql->Record[$key] = $value;
+                }
+            }
             $ip = getip();
             $time = time();
             if ($msql->f('adminname') != $user | $msql->f('adminpass') != $pass) {

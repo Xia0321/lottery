@@ -57,7 +57,7 @@ class LotteryResultsController extends BaseController {
 
             // 构建缓存键
             $cacheKey = "lottery:latest:" . ($gameId ?? 'all');
-            $cacheTTL = 30; // 缓存 30 秒
+            $cacheTTL = 300; // 缓存 5 分钟
 
             // 尝试从 Redis 获取缓存
             if ($this->redis) {

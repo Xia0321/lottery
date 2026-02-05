@@ -5,6 +5,8 @@
  * POST /api/v1/deposits.php - 创建充值
  * GET /api/v1/deposits.php - 查询充值记录
  * GET /api/v1/deposits.php/{id} - 查询单条充值
+ *
+ * 使用原系统 x_money 表，mtype=1 为充值
  */
 
 require_once(__DIR__ . '/BaseController.php');
@@ -45,6 +47,7 @@ class DepositsController extends BaseController {
             $userId = $this->getRequiredParam('user_id', 'int', 'POST');
             $amount = $this->getRequiredParam('amount', 'float', 'POST');
             $paymentMethod = $this->getOptionalParam('payment_method', 'string', 'online', 'POST');
+            $bankName = $this->getOptionalParam('bank_name', 'string', '', 'POST');
             $remark = $this->getOptionalParam('remark', 'string', '', 'POST');
 
             // 验证金额
@@ -52,8 +55,13 @@ class DepositsController extends BaseController {
                 $this->respondError('Invalid amount', ErrorCode::PARAM_INVALID, 400);
             }
 
+            // 单笔充值上限：100,000
+            if ($amount > 100000) {
+                $this->respondError('Amount exceeds maximum limit of 100,000', ErrorCode::PARAM_INVALID, 400);
+            }
+
             // 验证用户
-            global $tb_user, $tb_deposit;
+            global $tb_user, $tb_money;
 
             $sql = "SELECT userid, username, status, fid FROM `$tb_user` WHERE userid = ?";
             $params = [$userId];
@@ -82,12 +90,12 @@ class DepositsController extends BaseController {
             }
 
             // 生成订单号
-            $orderNo = 'DEP' . date('YmdHis') . rand(1000, 9999);
+            $orderNo = date('YmdHis') . rand(1000, 9999);
 
-            // 创建充值记录
+            // 创建充值记录（使用原系统 x_money 表）
             $sql = "
-                INSERT INTO x_deposit (userid, order_no, amount, payment_method, status, remark, created_at)
-                VALUES (?, ?, ?, ?, 0, ?, NOW())
+                INSERT INTO x_money (userid, mtype, money, sxfei, fs, bank, bz, status, orderid, tjtime, cuntime)
+                VALUES (?, 1, ?, 0, ?, ?, ?, 0, ?, NOW(), ?)
             ";
 
             $stmt = $this->mysqli->prepare($sql);
@@ -95,9 +103,23 @@ class DepositsController extends BaseController {
                 throw new Exception('Prepare failed: ' . $this->mysqli->error);
             }
 
-            $stmt->bind_param('isdss', $userId, $orderNo, $amount, $paymentMethod, $remark);
+            $currentTime = date('Y-m-d H:i:s');
+            $stmt->bind_param('idsssss', $userId, $amount, $paymentMethod, $bankName, $remark, $orderNo, $currentTime);
             $stmt->execute();
             $depositId = $stmt->insert_id;
+            $stmt->close();
+
+            // 记录交易日志（充值申请，适配 x_money_log 实际列名）
+            $logRemark = "API Deposit - Order: {$orderNo}";
+            $userMoney = $user['money']; // 当前余额（充值未审核，暂不增加）
+
+            $stmt = $this->mysqli->prepare("
+                INSERT INTO x_money_log (userid, money, usermoney, type, time, bz, modiuser, modisonuser, ip)
+                VALUES (?, ?, ?, 'deposit', NOW(), ?, 0, 0, ?)
+            ");
+            $clientIP = $_SERVER['REMOTE_ADDR'] ?? '';
+            $stmt->bind_param('iddss', $userId, $amount, $userMoney, $logRemark, $clientIP);
+            $stmt->execute();
             $stmt->close();
 
             // 返回数据
@@ -107,10 +129,11 @@ class DepositsController extends BaseController {
                 'user_id' => $userId,
                 'amount' => $amount,
                 'payment_method' => $paymentMethod,
+                'bank_name' => $bankName,
                 'status' => 0,
                 'status_text' => 'pending',
                 'remark' => $remark,
-                'created_at' => date('Y-m-d H:i:s')
+                'created_at' => $currentTime
             ];
 
             $this->respondSuccess($data, 'Deposit created successfully');
@@ -126,7 +149,7 @@ class DepositsController extends BaseController {
      */
     private function getDepositsList() {
         try {
-            global $tb_deposit, $tb_user;
+            global $tb_money, $tb_user;
 
             // 获取查询参数
             $userId = $this->getOptionalParam('user_id', 'int', null, 'GET');
@@ -139,40 +162,40 @@ class DepositsController extends BaseController {
             $offset = ($page - 1) * $pageSize;
 
             // 构建查询条件
-            $where = ['1=1'];
+            $where = ['m.mtype = 1']; // mtype=1 为充值
             $params = [];
             $types = '';
 
-            // 数据隔离
+            // 数据隔离（优化：使用 JOIN 代替子查询）
             if ($this->agentId !== null) {
-                $where[] = "d.userid IN (SELECT userid FROM `$tb_user` WHERE fid = ?)";
+                $where[] = "u.fid = ?";
                 $params[] = $this->agentId;
                 $types .= 'i';
             }
 
             // 用户筛选
             if ($userId !== null) {
-                $where[] = "d.userid = ?";
+                $where[] = "m.userid = ?";
                 $params[] = $userId;
                 $types .= 'i';
             }
 
             // 状态筛选
             if ($status !== null) {
-                $where[] = "d.status = ?";
+                $where[] = "m.status = ?";
                 $params[] = $status;
                 $types .= 'i';
             }
 
             // 日期范围
             if ($startDate !== null) {
-                $where[] = "d.created_at >= ?";
+                $where[] = "m.tjtime >= ?";
                 $params[] = $startDate;
                 $types .= 's';
             }
 
             if ($endDate !== null) {
-                $where[] = "d.created_at <= ?";
+                $where[] = "m.tjtime <= ?";
                 $params[] = $endDate;
                 $types .= 's';
             }
@@ -182,7 +205,8 @@ class DepositsController extends BaseController {
             // 查询总数
             $countSql = "
                 SELECT COUNT(*) as total
-                FROM x_deposit d
+                FROM x_money m
+                LEFT JOIN `$tb_user` u ON m.userid = u.userid
                 WHERE $whereClause
             ";
             $countStmt = $this->mysqli->prepare($countSql);
@@ -198,12 +222,13 @@ class DepositsController extends BaseController {
 
             // 查询列表
             $sql = "
-                SELECT d.id, d.userid, u.username, d.order_no, d.amount, d.payment_method,
-                       d.status, d.remark, d.created_at, d.completed_at
-                FROM x_deposit d
-                LEFT JOIN `$tb_user` u ON d.userid = u.userid
+                SELECT m.id, m.userid, u.username, m.orderid as order_no, m.money as amount,
+                       m.fs as payment_method, m.bank as bank_name, m.status, m.bz as remark,
+                       m.tjtime as created_at, m.cuntime as completed_at
+                FROM x_money m
+                LEFT JOIN `$tb_user` u ON m.userid = u.userid
                 WHERE $whereClause
-                ORDER BY d.created_at DESC
+                ORDER BY m.tjtime DESC
                 LIMIT ? OFFSET ?
             ";
 
@@ -225,6 +250,7 @@ class DepositsController extends BaseController {
                     'order_no' => $row['order_no'],
                     'amount' => floatval($row['amount']),
                     'payment_method' => $row['payment_method'],
+                    'bank_name' => $row['bank_name'],
                     'status' => (int)$row['status'],
                     'status_text' => $this->getDepositStatus($row['status']),
                     'remark' => $row['remark'],
@@ -258,22 +284,23 @@ class DepositsController extends BaseController {
      */
     private function getDepositById($depositId) {
         try {
-            global $tb_deposit, $tb_user;
+            global $tb_money, $tb_user;
 
             $sql = "
-                SELECT d.id, d.userid, u.username, d.order_no, d.amount, d.payment_method,
-                       d.status, d.remark, d.created_at, d.completed_at
-                FROM x_deposit d
-                LEFT JOIN `$tb_user` u ON d.userid = u.userid
-                WHERE d.id = ?
+                SELECT m.id, m.userid, u.username, m.orderid as order_no, m.money as amount,
+                       m.fs as payment_method, m.bank as bank_name, m.status, m.bz as remark,
+                       m.tjtime as created_at, m.cuntime as completed_at
+                FROM x_money m
+                LEFT JOIN `$tb_user` u ON m.userid = u.userid
+                WHERE m.id = ? AND m.mtype = 1
             ";
 
             $params = [$depositId];
             $types = 'i';
 
-            // 数据隔离
+            // 数据隔离（优化：使用 JOIN 代替子查询）
             if ($this->agentId !== null) {
-                $sql .= " AND d.userid IN (SELECT userid FROM `$tb_user` WHERE fid = ?)";
+                $sql .= " AND u.fid = ?";
                 $params[] = $this->agentId;
                 $types .= 'i';
             }
@@ -297,6 +324,7 @@ class DepositsController extends BaseController {
                 'order_no' => $deposit['order_no'],
                 'amount' => floatval($deposit['amount']),
                 'payment_method' => $deposit['payment_method'],
+                'bank_name' => $deposit['bank_name'],
                 'status' => (int)$deposit['status'],
                 'status_text' => $this->getDepositStatus($deposit['status']),
                 'remark' => $deposit['remark'],

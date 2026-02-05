@@ -53,8 +53,13 @@ class WithdrawalsController extends BaseController {
                 $this->respondError('Invalid amount', ErrorCode::PARAM_INVALID, 400);
             }
 
+            // 单笔提现上限：100,000
+            if ($amount > 100000) {
+                $this->respondError('Amount exceeds maximum limit of 100,000', ErrorCode::PARAM_INVALID, 400);
+            }
+
             // 验证用户
-            global $tb_user, $tb_withdrawal;
+            global $tb_user, $tb_money;
 
             $sql = "SELECT userid, username, money, status, fid FROM `$tb_user` WHERE userid = ?";
             $params = [$userId];
@@ -91,22 +96,36 @@ class WithdrawalsController extends BaseController {
             $this->mysqli->begin_transaction();
 
             try {
-                // 冻结余额（扣除）
-                $newBalance = $user['money'] - $amount;
+                // 冻结余额（扣除）- 使用原子操作防止竞态条件
+                $beforeMoney = $user['money'];
                 $stmt = $this->mysqli->prepare("
-                    UPDATE `$tb_user` SET money = ? WHERE userid = ?
+                    UPDATE `$tb_user` SET money = money - ? WHERE userid = ? AND money >= ?
                 ");
-                $stmt->bind_param('di', $newBalance, $userId);
+                $stmt->bind_param('did', $amount, $userId, $amount);
                 $stmt->execute();
+
+                // 检查是否更新成功（余额不足或并发更新会导致 affected_rows = 0）
+                if ($stmt->affected_rows === 0) {
+                    $stmt->close();
+                    throw new Exception('Insufficient balance or concurrent update detected');
+                }
+                $stmt->close();
+
+                // 获取更新后的余额
+                $stmt = $this->mysqli->prepare("SELECT money FROM `$tb_user` WHERE userid = ?");
+                $stmt->bind_param('i', $userId);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $newBalance = $result->fetch_assoc()['money'];
                 $stmt->close();
 
                 // 生成订单号
                 $orderNo = 'WD' . date('YmdHis') . rand(1000, 9999);
 
-                // 创建提现记录
+                // 创建提现记录（使用原系统 x_money 表，mtype=2 为提现）
                 $sql = "
-                    INSERT INTO x_withdrawal (userid, order_no, amount, bank_account, bank_name, status, remark, created_at)
-                    VALUES (?, ?, ?, ?, ?, 0, ?, NOW())
+                    INSERT INTO x_money (userid, mtype, money, sxfei, fs, bank, bz, status, orderid, tjtime, cuntime)
+                    VALUES (?, 2, ?, 0, ?, ?, ?, 0, ?, NOW(), ?)
                 ";
 
                 $stmt = $this->mysqli->prepare($sql);
@@ -114,21 +133,23 @@ class WithdrawalsController extends BaseController {
                     throw new Exception('Prepare failed: ' . $this->mysqli->error);
                 }
 
-                $stmt->bind_param('isdsss', $userId, $orderNo, $amount, $bankAccount, $bankName, $remark);
+                $currentTime = date('Y-m-d H:i:s');
+                $paymentMethod = 'bank_transfer'; // 提现默认银行转账
+                $stmt->bind_param('idsssss', $userId, $amount, $paymentMethod, $bankName, $remark, $orderNo, $currentTime);
                 $stmt->execute();
                 $withdrawalId = $stmt->insert_id;
                 $stmt->close();
 
-                // 记录交易日志
-                $beforeMoney = $user['money'];
+                // 记录交易日志（适配 x_money_log 实际列名）
                 $afterMoney = $newBalance;
-                $logRemark = "Withdrawal - Order: {$orderNo}";
+                $logRemark = "API Withdrawal - Order: {$orderNo}";
 
                 $stmt = $this->mysqli->prepare("
-                    INSERT INTO x_money_log (userid, money, before_money, after_money, type, remark, created_at)
-                    VALUES (?, ?, ?, ?, 'withdraw', ?, NOW())
+                    INSERT INTO x_money_log (userid, money, usermoney, type, time, bz, modiuser, modisonuser, ip)
+                    VALUES (?, ?, ?, 'withdraw', NOW(), ?, 0, 0, ?)
                 ");
-                $stmt->bind_param('iddds', $userId, $amount, $beforeMoney, $afterMoney, $logRemark);
+                $clientIP = $_SERVER['REMOTE_ADDR'] ?? '';
+                $stmt->bind_param('iddss', $userId, $amount, $afterMoney, $logRemark, $clientIP);
                 $stmt->execute();
                 $stmt->close();
 
@@ -156,7 +177,7 @@ class WithdrawalsController extends BaseController {
                     'balance_before' => floatval($beforeMoney),
                     'balance_after' => floatval($afterMoney),
                     'remark' => $remark,
-                    'created_at' => date('Y-m-d H:i:s')
+                    'created_at' => $currentTime
                 ];
 
                 $this->respondSuccess($data, 'Withdrawal created successfully');
@@ -178,7 +199,7 @@ class WithdrawalsController extends BaseController {
      */
     private function getWithdrawalsList() {
         try {
-            global $tb_withdrawal, $tb_user;
+            global $tb_money, $tb_user;
 
             // 获取查询参数
             $userId = $this->getOptionalParam('user_id', 'int', null, 'GET');
@@ -191,40 +212,40 @@ class WithdrawalsController extends BaseController {
             $offset = ($page - 1) * $pageSize;
 
             // 构建查询条件
-            $where = ['1=1'];
+            $where = ['m.mtype = 2']; // mtype=2 为提现
             $params = [];
             $types = '';
 
-            // 数据隔离
+            // 数据隔离（优化：使用 JOIN 代替子查询）
             if ($this->agentId !== null) {
-                $where[] = "w.userid IN (SELECT userid FROM `$tb_user` WHERE fid = ?)";
+                $where[] = "u.fid = ?";
                 $params[] = $this->agentId;
                 $types .= 'i';
             }
 
             // 用户筛选
             if ($userId !== null) {
-                $where[] = "w.userid = ?";
+                $where[] = "m.userid = ?";
                 $params[] = $userId;
                 $types .= 'i';
             }
 
             // 状态筛选
             if ($status !== null) {
-                $where[] = "w.status = ?";
+                $where[] = "m.status = ?";
                 $params[] = $status;
                 $types .= 'i';
             }
 
             // 日期范围
             if ($startDate !== null) {
-                $where[] = "w.created_at >= ?";
+                $where[] = "m.tjtime >= ?";
                 $params[] = $startDate;
                 $types .= 's';
             }
 
             if ($endDate !== null) {
-                $where[] = "w.created_at <= ?";
+                $where[] = "m.tjtime <= ?";
                 $params[] = $endDate;
                 $types .= 's';
             }
@@ -234,7 +255,8 @@ class WithdrawalsController extends BaseController {
             // 查询总数
             $countSql = "
                 SELECT COUNT(*) as total
-                FROM x_withdrawal w
+                FROM x_money m
+                LEFT JOIN `$tb_user` u ON m.userid = u.userid
                 WHERE $whereClause
             ";
             $countStmt = $this->mysqli->prepare($countSql);
@@ -250,12 +272,13 @@ class WithdrawalsController extends BaseController {
 
             // 查询列表
             $sql = "
-                SELECT w.id, w.userid, u.username, w.order_no, w.amount, w.bank_account,
-                       w.bank_name, w.status, w.remark, w.created_at, w.completed_at
-                FROM x_withdrawal w
-                LEFT JOIN `$tb_user` u ON w.userid = u.userid
+                SELECT m.id, m.userid, u.username, m.orderid as order_no, m.money as amount,
+                       m.bank as bank_name, m.status, m.bz as remark,
+                       m.tjtime as created_at, m.cuntime as completed_at
+                FROM x_money m
+                LEFT JOIN `$tb_user` u ON m.userid = u.userid
                 WHERE $whereClause
-                ORDER BY w.created_at DESC
+                ORDER BY m.tjtime DESC
                 LIMIT ? OFFSET ?
             ";
 
@@ -276,7 +299,6 @@ class WithdrawalsController extends BaseController {
                     'username' => $row['username'],
                     'order_no' => $row['order_no'],
                     'amount' => floatval($row['amount']),
-                    'bank_account' => $row['bank_account'],
                     'bank_name' => $row['bank_name'],
                     'status' => (int)$row['status'],
                     'status_text' => $this->getWithdrawalStatus($row['status']),
@@ -311,22 +333,23 @@ class WithdrawalsController extends BaseController {
      */
     private function getWithdrawalById($withdrawalId) {
         try {
-            global $tb_withdrawal, $tb_user;
+            global $tb_money, $tb_user;
 
             $sql = "
-                SELECT w.id, w.userid, u.username, w.order_no, w.amount, w.bank_account,
-                       w.bank_name, w.status, w.remark, w.created_at, w.completed_at
-                FROM x_withdrawal w
-                LEFT JOIN `$tb_user` u ON w.userid = u.userid
-                WHERE w.id = ?
+                SELECT m.id, m.userid, u.username, m.orderid as order_no, m.money as amount,
+                       m.bank as bank_name, m.status, m.bz as remark,
+                       m.tjtime as created_at, m.cuntime as completed_at
+                FROM x_money m
+                LEFT JOIN `$tb_user` u ON m.userid = u.userid
+                WHERE m.id = ? AND m.mtype = 2
             ";
 
             $params = [$withdrawalId];
             $types = 'i';
 
-            // 数据隔离
+            // 数据隔离（优化：使用 JOIN 代替子查询）
             if ($this->agentId !== null) {
-                $sql .= " AND w.userid IN (SELECT userid FROM `$tb_user` WHERE fid = ?)";
+                $sql .= " AND u.fid = ?";
                 $params[] = $this->agentId;
                 $types .= 'i';
             }
@@ -349,7 +372,6 @@ class WithdrawalsController extends BaseController {
                 'username' => $withdrawal['username'],
                 'order_no' => $withdrawal['order_no'],
                 'amount' => floatval($withdrawal['amount']),
-                'bank_account' => $withdrawal['bank_account'],
                 'bank_name' => $withdrawal['bank_name'],
                 'status' => (int)$withdrawal['status'],
                 'status_text' => $this->getWithdrawalStatus($withdrawal['status']),

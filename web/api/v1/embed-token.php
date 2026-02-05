@@ -11,6 +11,7 @@
  */
 
 require_once(__DIR__ . '/BaseController.php');
+require_once(__DIR__ . '/../../class/api/EmbedTokenManager.php');
 
 class EmbedTokenController extends BaseController {
 
@@ -64,22 +65,23 @@ class EmbedTokenController extends BaseController {
                 $this->respondError('User account is disabled', ErrorCode::BIZ_USER_DISABLED, 403);
             }
 
-            // 生成 Token
-            $token = $this->createToken($userId, $gameId, $expiresIn);
+            // 使用 EmbedTokenManager 生成 Token
+            $tokenManager = new EmbedTokenManager($this->mysqli);
+            $tokenResult = $tokenManager->generateToken($userId, $this->apiKeyData['id'], $expiresIn);
 
             // 构建嵌入 URL
             $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
             $host = $_SERVER['HTTP_HOST'];
-            $embedUrl = $protocol . '://' . $host . '/web/api/embed/game.php?token=' . urlencode($token);
+            $embedUrl = $protocol . '://' . $host . '/web/embed/game.php?token=' . urlencode($tokenResult['token']);
 
             // 响应数据
             $data = [
-                'token' => $token,
+                'token' => $tokenResult['token'],
                 'embed_url' => $embedUrl,
                 'user_id' => (int)$userId,
                 'username' => $user['username'],
                 'game_id' => $gameId,
-                'expires_at' => date('Y-m-d H:i:s', time() + $expiresIn),
+                'expires_at' => $tokenResult['expires_at'],
                 'expires_in' => $expiresIn
             ];
 
@@ -89,41 +91,6 @@ class EmbedTokenController extends BaseController {
             error_log("Generate embed token error: " . $e->getMessage());
             $this->respondError('Failed to generate token', ErrorCode::SYS_DATABASE_ERROR, 500);
         }
-    }
-
-    /**
-     * 创建加密 Token
-     *
-     * @param int $userId
-     * @param int $gameId
-     * @param int $expiresIn
-     * @return string
-     */
-    private function createToken($userId, $gameId, $expiresIn) {
-        global $config;
-
-        // 使用配置文件中的密钥
-        $secret = $config['api_secret'] ?? 'default_secret_key_change_this';
-
-        // Token 数据
-        $tokenData = [
-            'user_id' => $userId,
-            'game_id' => $gameId,
-            'exp' => time() + $expiresIn,
-            'nonce' => bin2hex(random_bytes(8))
-        ];
-
-        // JSON 编码
-        $jsonData = json_encode($tokenData);
-
-        // AES-256-CBC 加密
-        $iv = substr($secret, 0, 16);
-        $encrypted = openssl_encrypt($jsonData, 'AES-256-CBC', $secret, 0, $iv);
-
-        // Base64 编码
-        $token = base64_encode($encrypted);
-
-        return $token;
     }
 }
 

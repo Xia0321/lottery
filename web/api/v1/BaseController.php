@@ -33,12 +33,15 @@ class BaseController {
         set_exception_handler([$this, 'handleException']);
         set_error_handler([$this, 'handleError']);
 
+        // 规范化 URI：去除 .php 后缀，兼容直接文件访问和 URL 重写两种模式
+        $_SERVER['REQUEST_URI'] = preg_replace('#\.php(?=\?|/|$)#', '', $_SERVER['REQUEST_URI']);
+
         // 设置 CORS 头 (如需要)
         $this->setCorsHeaders();
 
         // 获取数据库连接
         global $msql;
-        $this->mysqli = $msql->mysqli;
+        $this->mysqli = $msql->get_mysqli();
 
         // 初始化日志记录器
         $this->logger = new ApiLogger($this->mysqli);
@@ -167,6 +170,16 @@ class BaseController {
     protected function checkPermission($resourceAgentId) {
         if ($resourceAgentId != $this->agentId) {
             ApiResponse::forbidden('You do not have permission to access this resource');
+        }
+    }
+
+    /**
+     * 要求指定的 API Scope 权限
+     * @param string $scope 权限标识，例如 bets.read, bets.write
+     */
+    protected function requireScope($scope) {
+        if ($this->auth) {
+            $this->auth->requireScope($scope);
         }
     }
 

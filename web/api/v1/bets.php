@@ -62,7 +62,7 @@ class BetsController extends BaseController {
 
             // 数据隔离：只能查询本代理下的用户投注
             if ($this->agentId !== null) {
-                $where[] = "b.userid IN (SELECT userid FROM `$tb_user` WHERE fid = ?)";
+                $where[] = "u.fid = ?";
                 $params[] = $this->agentId;
                 $types .= 'i';
             }
@@ -76,27 +76,27 @@ class BetsController extends BaseController {
 
             // 游戏 ID 过滤
             if ($gameId !== null) {
-                $where[] = "b.gameid = ?";
+                $where[] = "b.gid = ?";
                 $params[] = $gameId;
                 $types .= 'i';
             }
 
             // 状态过滤
             if ($status !== null) {
-                $where[] = "b.status = ?";
+                $where[] = "b.z = ?";
                 $params[] = $status;
                 $types .= 'i';
             }
 
             // 日期范围过滤
             if ($startDate !== null) {
-                $where[] = "b.created_at >= ?";
+                $where[] = "b.time >= ?";
                 $params[] = $startDate;
                 $types .= 's';
             }
 
             if ($endDate !== null) {
-                $where[] = "b.created_at <= ?";
+                $where[] = "b.time <= ?";
                 $params[] = $endDate;
                 $types .= 's';
             }
@@ -107,6 +107,7 @@ class BetsController extends BaseController {
             $countSql = "
                 SELECT COUNT(*) as total
                 FROM `$tb_bet` b
+                LEFT JOIN `$tb_user` u ON b.userid = u.userid
                 WHERE $whereClause
             ";
             $countStmt = $this->mysqli->prepare($countSql);
@@ -122,12 +123,12 @@ class BetsController extends BaseController {
 
             // 查询列表数据
             $sql = "
-                SELECT b.betid, b.userid, u.username, b.gameid, b.qishu, b.money,
-                       b.win_money, b.status, b.bet_content, b.created_at, b.settled_at
+                SELECT b.id, b.userid, u.username, b.gid, b.qishu, b.je,
+                       b.prize, b.z, b.content, b.time
                 FROM `$tb_bet` b
                 LEFT JOIN `$tb_user` u ON b.userid = u.userid
                 WHERE $whereClause
-                ORDER BY b.created_at DESC
+                ORDER BY b.time DESC
                 LIMIT ? OFFSET ?
             ";
 
@@ -148,18 +149,17 @@ class BetsController extends BaseController {
             $bets = [];
             while ($row = $result->fetch_assoc()) {
                 $bets[] = [
-                    'bet_id' => (int)$row['betid'],
+                    'bet_id' => (int)$row['id'],
                     'user_id' => (int)$row['userid'],
                     'username' => $row['username'],
-                    'game_id' => (int)$row['gameid'],
+                    'game_id' => (int)$row['gid'],
                     'period' => $row['qishu'],
-                    'bet_amount' => floatval($row['money']),
-                    'win_amount' => floatval($row['win_money']),
-                    'status' => (int)$row['status'],
-                    'status_text' => $this->getBetStatusText($row['status']),
-                    'bet_content' => $row['bet_content'],
-                    'created_at' => $row['created_at'],
-                    'settled_at' => $row['settled_at']
+                    'bet_amount' => floatval($row['je']),
+                    'win_amount' => floatval($row['prize']),
+                    'status' => (int)$row['z'],
+                    'status_text' => $this->getBetStatusText($row['z']),
+                    'bet_content' => $row['content'],
+                    'created_at' => $row['time']
                 ];
             }
             $stmt->close();
@@ -195,20 +195,20 @@ class BetsController extends BaseController {
 
             // 构建查询
             $sql = "
-                SELECT b.betid, b.userid, u.username, b.gameid, b.qishu, b.money,
-                       b.win_money, b.status, b.bet_content, b.bet_type, b.odds,
-                       b.created_at, b.settled_at
+                SELECT b.id, b.userid, u.username, b.gid, b.qishu, b.je,
+                       b.prize, b.z, b.content, b.xtype, b.peilv1,
+                       b.time
                 FROM `$tb_bet` b
                 LEFT JOIN `$tb_user` u ON b.userid = u.userid
-                WHERE b.betid = ?
+                WHERE b.id = ?
             ";
 
             $params = [$betId];
             $types = 'i';
 
-            // 数据隔离：只能查询本代理下的用户投注
+            // 数据隔离
             if ($this->agentId !== null) {
-                $sql .= " AND b.userid IN (SELECT userid FROM `$tb_user` WHERE fid = ?)";
+                $sql .= " AND u.fid = ?";
                 $params[] = $this->agentId;
                 $types .= 'i';
             }
@@ -230,20 +230,19 @@ class BetsController extends BaseController {
 
             // 格式化响应数据
             $data = [
-                'bet_id' => (int)$bet['betid'],
+                'bet_id' => (int)$bet['id'],
                 'user_id' => (int)$bet['userid'],
                 'username' => $bet['username'],
-                'game_id' => (int)$bet['gameid'],
+                'game_id' => (int)$bet['gid'],
                 'period' => $bet['qishu'],
-                'bet_amount' => floatval($bet['money']),
-                'win_amount' => floatval($bet['win_money']),
-                'status' => (int)$bet['status'],
-                'status_text' => $this->getBetStatusText($bet['status']),
-                'bet_content' => $bet['bet_content'],
-                'bet_type' => $bet['bet_type'],
-                'odds' => floatval($bet['odds']),
-                'created_at' => $bet['created_at'],
-                'settled_at' => $bet['settled_at']
+                'bet_amount' => floatval($bet['je']),
+                'win_amount' => floatval($bet['prize']),
+                'status' => (int)$bet['z'],
+                'status_text' => $this->getBetStatusText($bet['z']),
+                'bet_content' => $bet['content'],
+                'bet_type' => (int)$bet['xtype'],
+                'odds' => floatval($bet['peilv1']),
+                'created_at' => $bet['time']
             ];
 
             $this->respondSuccess($data);
@@ -264,7 +263,6 @@ class BetsController extends BaseController {
             $gameId = $this->getRequiredParam('game_id', 'int', 'POST');
             $betAmount = $this->getRequiredParam('bet_amount', 'float', 'POST');
             $betContent = $this->getRequiredParam('bet_content', 'string', 'POST');
-            $betType = $this->getOptionalParam('bet_type', 'string', 'normal', 'POST');
 
             // 数据隔离：只能为本代理下的用户创建投注
             global $tb_user, $tb_bet, $tb_game;
@@ -297,7 +295,7 @@ class BetsController extends BaseController {
 
             // 验证游戏
             $stmt = $this->mysqli->prepare("
-                SELECT gameid, minmoney, maxmoney, status FROM `$tb_game` WHERE gameid = ?
+                SELECT gid, ifopen, thisqishu FROM `$tb_game` WHERE gid = ?
             ");
             $stmt->bind_param('i', $gameId);
             $stmt->execute();
@@ -309,17 +307,8 @@ class BetsController extends BaseController {
                 $this->respondError('Game not found', ErrorCode::BIZ_RESOURCE_NOT_FOUND, 404);
             }
 
-            if ($game['status'] != 1) {
+            if ($game['ifopen'] != 1) {
                 $this->respondError('Game is not available', ErrorCode::BIZ_GAME_UNAVAILABLE, 400);
-            }
-
-            // 验证投注金额
-            if ($betAmount < $game['minmoney']) {
-                $this->respondError("Bet amount below minimum ({$game['minmoney']})", ErrorCode::BIZ_BET_AMOUNT_INVALID, 400);
-            }
-
-            if ($betAmount > $game['maxmoney']) {
-                $this->respondError("Bet amount exceeds maximum ({$game['maxmoney']})", ErrorCode::BIZ_BET_AMOUNT_INVALID, 400);
             }
 
             // 验证余额
@@ -331,38 +320,52 @@ class BetsController extends BaseController {
             $this->mysqli->begin_transaction();
 
             try {
-                // 扣除余额
-                $newBalance = $user['money'] - $betAmount;
+                // 扣除余额（使用原子操作防止竞态条件）
+                $beforeMoney = $user['money'];
                 $stmt = $this->mysqli->prepare("
-                    UPDATE `$tb_user` SET money = ? WHERE userid = ?
+                    UPDATE `$tb_user` SET money = money - ? WHERE userid = ? AND money >= ?
                 ");
-                $stmt->bind_param('di', $newBalance, $userId);
+                $stmt->bind_param('did', $betAmount, $userId, $betAmount);
                 $stmt->execute();
+
+                if ($stmt->affected_rows === 0) {
+                    $stmt->close();
+                    throw new Exception('Insufficient balance or concurrent update detected');
+                }
                 $stmt->close();
 
-                // 创建投注记录
-                // 获取当前期数（简化版，实际应从游戏表获取）
-                $currentPeriod = date('Ymd') . str_pad(date('H'), 3, '0', STR_PAD_LEFT);
+                // 获取更新后的余额
+                $stmt = $this->mysqli->prepare("SELECT money FROM `$tb_user` WHERE userid = ?");
+                $stmt->bind_param('i', $userId);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                $newBalance = $result->fetch_assoc()['money'];
+                $stmt->close();
+
+                // 创建投注记录（适配 x_lib 表结构）
+                $currentPeriod = $game['thisqishu'];
+                $currentDate = date('Y-m-d');
+                $currentTime = date('Y-m-d H:i:s');
 
                 $stmt = $this->mysqli->prepare("
-                    INSERT INTO `$tb_bet` (userid, gameid, qishu, money, bet_content, bet_type, status, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, 0, NOW())
+                    INSERT INTO `$tb_bet` (userid, dates, qishu, gid, content, je, time, z, prize, tid, bid, sid, cid, pid, abcd, ab, peilv1, peilv2, points, xtype, znum)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, 0, 0, '', '', 0, 0, 0, 0, 0)
                 ");
-                $stmt->bind_param('iisdss', $userId, $gameId, $currentPeriod, $betAmount, $betContent, $betType);
+                $stmt->bind_param('isisdsss', $userId, $currentDate, $currentPeriod, $gameId, $betContent, $betAmount, $currentTime);
                 $stmt->execute();
                 $betId = $stmt->insert_id;
                 $stmt->close();
 
-                // 记录交易日志
-                $beforeMoney = $user['money'];
+                // 记录交易日志（适配 x_money_log 表结构）
                 $afterMoney = $newBalance;
-                $remark = "Bet created - Game ID: {$gameId}, Bet ID: {$betId}";
+                $remark = "API Bet - Game:{$gameId}, Bet:{$betId}";
 
                 $stmt = $this->mysqli->prepare("
-                    INSERT INTO x_money_log (userid, money, before_money, after_money, type, remark, created_at)
-                    VALUES (?, ?, ?, ?, 'bet', ?, NOW())
+                    INSERT INTO x_money_log (userid, money, usermoney, type, time, bz, modiuser, modisonuser, ip)
+                    VALUES (?, ?, ?, 'bet', NOW(), ?, 0, 0, ?)
                 ");
-                $stmt->bind_param('iddds', $userId, $betAmount, $beforeMoney, $afterMoney, $remark);
+                $clientIP = $_SERVER['REMOTE_ADDR'] ?? '';
+                $stmt->bind_param('iddss', $userId, $betAmount, $afterMoney, $remark, $clientIP);
                 $stmt->execute();
                 $stmt->close();
 
@@ -386,17 +389,15 @@ class BetsController extends BaseController {
                     'period' => $currentPeriod,
                     'bet_amount' => $betAmount,
                     'bet_content' => $betContent,
-                    'bet_type' => $betType,
                     'balance_before' => floatval($beforeMoney),
                     'balance_after' => floatval($afterMoney),
                     'status' => 0,
-                    'created_at' => date('Y-m-d H:i:s')
+                    'created_at' => $currentTime
                 ];
 
                 $this->respondSuccess($data, 'Bet created successfully');
 
             } catch (Exception $e) {
-                // 回滚事务
                 $this->mysqli->rollback();
                 throw $e;
             }

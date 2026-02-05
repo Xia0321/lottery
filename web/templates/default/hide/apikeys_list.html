@@ -1,0 +1,188 @@
+{+include file='header2.html'+}
+<style>
+.status-on { color: #27ae60; font-weight: bold; }
+.status-off { color: #e74c3c; font-weight: bold; }
+.btn-add { background: #3498db; color: #fff; border: none; padding: 5px 15px; cursor: pointer; border-radius: 3px; }
+.btn-add:hover { background: #2980b9; }
+.btn-toggle { padding: 3px 8px; cursor: pointer; border-radius: 3px; border: 1px solid #ccc; }
+.btn-del { padding: 3px 8px; cursor: pointer; border-radius: 3px; border: 1px solid #e74c3c; color: #e74c3c; background: #fff; }
+.btn-del:hover { background: #e74c3c; color: #fff; }
+.btn-detail { padding: 3px 8px; cursor: pointer; border-radius: 3px; border: 1px solid #3498db; color: #3498db; background: #fff; }
+.btn-detail:hover { background: #3498db; color: #fff; }
+.add-form { display: none; margin: 10px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px; }
+.add-form table td { padding: 5px 10px; }
+.add-form input[type=text], .add-form input[type=number], .add-form input[type=datetime-local] { width: 250px; padding: 5px; border: 1px solid #ccc; border-radius: 3px; }
+.key-created { display: none; margin: 10px 0; padding: 15px; background: #eafaf1; border: 1px solid #27ae60; border-radius: 5px; }
+.key-created .key-value { font-family: monospace; font-size: 14px; background: #fff; padding: 5px 10px; border: 1px solid #ddd; margin: 3px 0; display: inline-block; word-break: break-all; }
+.key-created .warn { color: #e74c3c; font-weight: bold; margin-top: 8px; }
+.api-key-text { font-family: monospace; font-size: 12px; }
+</style>
+</head>
+<body>
+<script id=myjs language="javascript">var mulu='{+$mulu+}';var js=1;var sss='apikeys_list';</script>
+<div class="main">
+    <div class="top_info">
+        <span class="title">API Key 管理</span>
+        <span class="right">共 {+$total+} 个 API Key</span>
+    </div>
+
+    <div style="margin: 10px 0;">
+        <button class="btn-add" id="showAddForm">+ 创建 API Key</button>
+    </div>
+
+    <!-- 创建表单 -->
+    <div class="add-form" id="addForm">
+        <table>
+            <tr>
+                <td>合作伙伴名称：</td>
+                <td><input type="text" id="partner_name" placeholder="例如：合作商A" /></td>
+            </tr>
+            <tr>
+                <td>关联代理 ID：</td>
+                <td><input type="number" id="agent_id" value="1" min="1" placeholder="代理 ID（数据隔离）" /></td>
+            </tr>
+            <tr>
+                <td>速率限制（次/分钟）：</td>
+                <td><input type="number" id="rate_limit" value="100" min="1" max="10000" /></td>
+            </tr>
+            <tr>
+                <td>过期时间（可选）：</td>
+                <td><input type="datetime-local" id="expires_at" /></td>
+            </tr>
+            <tr>
+                <td colspan="2" style="padding-top: 10px;">
+                    <button class="btn-add" id="doAdd">确认创建</button>
+                    <button class="btn-toggle" id="cancelAdd">取消</button>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <!-- 创建成功提示 -->
+    <div class="key-created" id="keyCreated">
+        <strong>API Key 创建成功！请妥善保存以下信息（Secret 仅显示一次）：</strong><br/><br/>
+        API Key: <span class="key-value" id="newApiKey"></span><br/>
+        API Secret: <span class="key-value" id="newApiSecret"></span><br/>
+        <p class="warn">* API Secret 仅在创建时显示，请立即复制保存！</p>
+    </div>
+
+    <!-- 列表 -->
+    <table class="data_table data_list">
+        <tr>
+            <th>ID</th>
+            <th>API Key</th>
+            <th>合作伙伴</th>
+            <th>代理 ID</th>
+            <th>状态</th>
+            <th>速率限制</th>
+            <th>过期时间</th>
+            <th>最后使用</th>
+            <th>创建时间</th>
+            <th>操作</th>
+        </tr>
+        {+section name=i loop=$data+}
+        <tr>
+            <td>{+$data[i].id+}</td>
+            <td class="api-key-text" title="{+$data[i].api_key+}">{+$data[i].api_key|truncate:20:"..."+}</td>
+            <td>{+$data[i].partner_name+}</td>
+            <td>{+$data[i].agent_id+}</td>
+            <td>
+                {+if $data[i].status == 1+}
+                <span class="status-on">启用</span>
+                {+else+}
+                <span class="status-off">禁用</span>
+                {+/if+}
+            </td>
+            <td>{+$data[i].rate_limit+} 次/分</td>
+            <td>{+$data[i].expires_at+}</td>
+            <td>{+$data[i].last_used_at+}</td>
+            <td>{+$data[i].created_at+}</td>
+            <td>
+                <button class="btn-detail" onclick="viewDetail({+$data[i].id+})">详情</button>
+                <button class="btn-toggle" onclick="toggleKey({+$data[i].id+})">{+if $data[i].status == 1+}禁用{+else+}启用{+/if+}</button>
+                <button class="btn-del" onclick="delKey({+$data[i].id+}, '{+$data[i].partner_name+}')">删除</button>
+            </td>
+        </tr>
+        {+sectionelse+}
+        <tr>
+            <td colspan="10" style="text-align: center; padding: 20px; color: #999;">暂无 API Key，点击上方按钮创建</td>
+        </tr>
+        {+/section+}
+    </table>
+
+    <div style="margin-top: 10px;">{+$page+}</div>
+</div>
+
+<script>
+// 显示/隐藏创建表单
+$('#showAddForm').click(function() {
+    $('#addForm').toggle();
+    $('#keyCreated').hide();
+});
+$('#cancelAdd').click(function() {
+    $('#addForm').hide();
+});
+
+// 创建 API Key
+$('#doAdd').click(function() {
+    var partnerName = $('#partner_name').val().trim();
+    var agentId = $('#agent_id').val();
+    var rateLimit = $('#rate_limit').val();
+    var expiresAt = $('#expires_at').val();
+
+    if (!partnerName) {
+        alert('请输入合作伙伴名称');
+        return;
+    }
+    if (!agentId || agentId <= 0) {
+        alert('请输入有效的代理 ID');
+        return;
+    }
+
+    $.post('apikeys.php?xtype=add', {
+        partner_name: partnerName,
+        agent_id: agentId,
+        rate_limit: rateLimit,
+        expires_at: expiresAt
+    }, function(res) {
+        var r = typeof res === 'string' ? JSON.parse(res) : res;
+        if (r.code === 0) {
+            $('#addForm').hide();
+            $('#newApiKey').text(r.data.api_key);
+            $('#newApiSecret').text(r.data.api_secret);
+            $('#keyCreated').show();
+            // 2秒后刷新列表
+            setTimeout(function() { location.reload(); }, 3000);
+        } else {
+            alert(r.msg);
+        }
+    });
+});
+
+// 启用/禁用
+function toggleKey(id) {
+    if (!confirm('确认切换此 API Key 的状态？')) return;
+    $.post('apikeys.php?xtype=toggle', { id: id }, function(res) {
+        var r = typeof res === 'string' ? JSON.parse(res) : res;
+        alert(r.msg);
+        location.reload();
+    });
+}
+
+// 删除
+function delKey(id, name) {
+    if (!confirm('确认删除 API Key [' + name + ']？此操作不可恢复！')) return;
+    $.post('apikeys.php?xtype=del', { id: id }, function(res) {
+        var r = typeof res === 'string' ? JSON.parse(res) : res;
+        alert(r.msg);
+        location.reload();
+    });
+}
+
+// 查看详情
+function viewDetail(id) {
+    location.href = 'apikeys.php?xtype=detail&id=' + id;
+}
+</script>
+</body>
+</html>

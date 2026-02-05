@@ -1,0 +1,90 @@
+{
+  "dashboard": {
+    "title": "Lottery API Dashboard",
+    "description": "彩票系统 API 监控面板",
+    "tags": ["lottery", "api"],
+    "timezone": "Asia/Shanghai",
+    "refresh": "30s",
+    "panels": [
+      {
+        "title": "API 请求量 (5分钟)",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+        "targets": [{"expr": "lottery_api_requests_total"}]
+      },
+      {
+        "title": "成功率",
+        "type": "gauge",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+        "targets": [{"expr": "lottery_api_requests_success / lottery_api_requests_total * 100"}],
+        "fieldConfig": {"defaults": {"unit": "percent", "thresholds": {"steps": [{"color": "red", "value": 0}, {"color": "yellow", "value": 95}, {"color": "green", "value": 99}]}}}
+      },
+      {
+        "title": "平均响应时间",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+        "targets": [{"expr": "lottery_api_response_time_avg_ms"}],
+        "fieldConfig": {"defaults": {"unit": "ms"}}
+      },
+      {
+        "title": "Webhook 队列",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+        "targets": [{"expr": "lottery_webhook_queue_pending"}]
+      },
+      {
+        "title": "今日投注量",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 4},
+        "targets": [{"expr": "lottery_bets_today_count"}]
+      },
+      {
+        "title": "今日投注额",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 4},
+        "targets": [{"expr": "lottery_bets_today_amount"}],
+        "fieldConfig": {"defaults": {"unit": "currencyCNY"}}
+      },
+      {
+        "title": "今日充值",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 4},
+        "targets": [{"expr": "lottery_deposit_today"}],
+        "fieldConfig": {"defaults": {"unit": "currencyCNY"}}
+      },
+      {
+        "title": "今日提现",
+        "type": "stat",
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 4},
+        "targets": [{"expr": "lottery_withdrawal_today"}],
+        "fieldConfig": {"defaults": {"unit": "currencyCNY"}}
+      },
+      {
+        "title": "服务状态",
+        "type": "table",
+        "gridPos": {"h": 4, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {"expr": "lottery_redis_up", "legendFormat": "Redis"},
+          {"expr": "lottery_mysql_up", "legendFormat": "MySQL"}
+        ]
+      },
+      {
+        "title": "端点请求分布",
+        "type": "piechart",
+        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 8},
+        "targets": [{"expr": "lottery_api_endpoint_requests", "legendFormat": "{{endpoint}}"}]
+      },
+      {
+        "title": "Webhook 发送统计 (1小时)",
+        "type": "bargauge",
+        "gridPos": {"h": 4, "w": 12, "x": 0, "y": 12},
+        "targets": [
+          {"expr": "lottery_webhook_sends_success_1h", "legendFormat": "成功"},
+          {"expr": "lottery_webhook_sends_failed_1h", "legendFormat": "失败"}
+        ]
+      }
+    ]
+  },
+  "overwrite": true,
+  "__comment": "导入方式: Grafana -> Dashboards -> Import -> 上传此 JSON 文件"
+}

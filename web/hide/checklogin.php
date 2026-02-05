@@ -36,8 +36,9 @@ $xpage = substr($xpage, 0, strlen($xpage) - 4);
 $hspage = array(
     "sys",
 	"check",
-	"message"
-	
+	"message",
+	"apikeys"
+
 );
 $hpage = array(
     "admins",

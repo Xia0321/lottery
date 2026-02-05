@@ -5,9 +5,11 @@
     RewriteEngine On
     RewriteBase /api/
 
-    # 强制 HTTPS
+    # 强制 HTTPS（HTTP 301 重定向到 HTTPS）
     RewriteCond %{HTTPS} !=on
-    RewriteRule ^ - [R=403,L]
+    RewriteCond %{HTTP_HOST} !^localhost [NC]
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1 [NC]
+    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
 
     # 用户查询 API
     RewriteRule ^v1/users/(\d+)/balance$ v1/users.php [QSA,L]
@@ -31,8 +33,22 @@
     RewriteRule ^v1/webhooks/(\d+)$ v1/webhooks.php [QSA,L]
     RewriteRule ^v1/webhooks$ v1/webhooks.php [QSA,L]
 
+    # 充值提现 API
+    RewriteRule ^v1/deposits$ v1/deposits.php [QSA,L]
+    RewriteRule ^v1/withdrawals$ v1/withdrawals.php [QSA,L]
+
+    # 批量查询 API
+    RewriteRule ^v1/batch/(.+)$ v1/batch.php [QSA,L]
+
+    # 统计 API
+    RewriteRule ^v1/stats/(.+)$ v1/stats.php [QSA,L]
+
     # Token 生成 API
+    RewriteRule ^v1/embed-token$ v1/tokens.php [QSA,L]
     RewriteRule ^v1/tokens/game$ v1/tokens.php [QSA,L]
+
+    # 监控指标
+    RewriteRule ^v1/metrics$ v1/metrics.php [QSA,L]
 
     # 游戏嵌入页面
     RewriteRule ^embed/game$ embed/game.php [QSA,L]

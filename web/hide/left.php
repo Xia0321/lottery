@@ -33,6 +33,7 @@ switch ($_REQUEST['xtype']) {
 	   $v .= "<li><a href='play.php?xtype=show'>玩法列表</a></li>";
 	   $v .= "<li><a href='javascript:void(0);' X='nows'>注单删改2</a></li>";
 	   $v .= "<li><a href='play.php?xtype=downlist'>下载记录</a></li>";
+	   $v .= "<li><a href='apikeys.php?xtype=list'>API Key管理</a></li>";
 	   
 	
 	   }
